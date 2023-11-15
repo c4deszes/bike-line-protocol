@@ -1,0 +1,79 @@
+#ifndef LINE_PROTOCOL_APP_GEN_H_
+#define LINE_PROTOCOL_APP_GEN_H_
+
+#include <stdint.h>
+
+{% for request in node.publishes -%}
+#define LINE_REQUEST_{{request.name}}_ID 0x{{'%04X' % request.id}}
+#define LINE_REQUEST_{{request.name}}_SIZE {{request.size}}
+{% endfor %}
+
+{% for request in node.subscribes -%}
+#define LINE_REQUEST_{{request.name}}_ID 0x{{'%04X' % request.id}}
+#define LINE_REQUEST_{{request.name}}_SIZE {{request.size}}
+{%- endfor %}
+
+{% for request in node.publishes -%}
+typedef union {
+    struct {
+    {%- set position = namespace(value=0) -%}
+    {% for signal in request.signals|sort(attribute='offset') -%}
+        {% if signal.offset > position.value -%}
+        unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
+        {% endif %}
+        unsigned int {{signal.name}} : {{signal.width}};
+        {%- set position.value = position.value + signal.width -%}
+    {%- endfor %}
+    {%- if position.value < request.size * 8 %}
+        unsigned int _end : {{request.size * 8 - position.value}};
+    {%- endif %}
+    } fields;
+    uint8_t data[{{request.size}}];
+} LINE_Frame_{{request.name}}_t;
+
+// TODO: verify union length
+// assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
+
+extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+
+{% for signal in request.signals|sort(attribute='offset') -%}
+#define LINE_SET_{{request.name}}_{{signal.name}}_SIGNAL(value) LINE_{{request.name}}_data.fields.{{signal.name}} = value;
+{% endfor %}
+{%- endfor %}
+
+{%- for encoder in network.encoders %}
+{%- if "FormulaEncoder" in encoder.__class__.__name__ %}
+#define LINE_ENCODER_{{encoder.name}}_Encode(value) ((value - {{encoder.offset}}) / {{encoder.scale}})
+#define LINE_ENCODER_{{encoder.name}}_Decode(value) (value * {{encoder.scale}} + {{encoder.offset}})
+{%- elif "MappingEncoder" in encoder.__class__.__name__ %}
+{%- for key, value in encoder.mapping.items() %}
+#define LINE_ENCODER_{{encoder.name}}_{{value}} {{key}}
+{%- endfor %}
+{% endif %}
+{% endfor %}
+
+{% for request in node.subscribes -%}
+typedef union {
+    struct {
+    {%- set position = namespace(value=0) -%}
+    {% for signal in request.signals|sort(attribute='offset') -%}
+        {% if signal.offset > position.value -%}
+        unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
+        {% endif %}
+        unsigned int {{signal.name}} : {{signal.width}};
+        {%- set position.value = position.value + signal.width -%}
+    {%- endfor %}
+    {%- if position.value < request.size * 8 %}
+        unsigned int _end : {{request.size * 8 - position.value}};
+    {%- endif %}
+    } fields;
+    uint8_t data[{{request.size}}];
+} LINE_Frame_{{request.name}}_t;
+
+// TODO: verify union length
+// assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
+
+extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+{% endfor %}
+
+#endif

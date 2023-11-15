@@ -1,0 +1,63 @@
+{
+    "name": "test-network",
+    "nodes": {
+        "BodyComputer": {
+            "address": "0x00",
+            "subscribes": [
+                "WheelSpeed"
+            ],
+            "publishes": []
+        },
+        "RotorSensor": {
+            "address": "0x01",
+            "subscribes": [],
+            "publishes": [
+                "WheelSpeed"
+            ]
+        }
+    },
+    "requests": {
+        "WheelSpeed": {
+            "id": "0x1000",
+            "size": "5",
+            "layout": {
+                "FrontSpeed": {
+                    "offset": 0,
+                    "width": 16,
+                    "encoder": "SpeedEncoder"
+                },
+                "RearSpeed": {
+                    "offset": 16,
+                    "width": 16,
+                    "encoder": "SpeedEncoder"
+                },
+                "FrontSpeedStatus": {
+                    "offset": 32,
+                    "width": 2,
+                    "encoder": "SpeedValidity"
+                },
+                "RearSpeedStatus": {
+                    "offset": 34,
+                    "width": 2,
+                    "encoder": "SpeedValidity"
+                }
+            }
+        }
+    },
+    "encoders": {
+        "SpeedEncoder": {
+            "type": "formula",
+            "offset": 0,
+            "scale": 0.3921
+        },
+        "SpeedValidity": {
+            "type": "mapping",
+            "mapping": {
+                "0": "Invalid",
+                "1": "Valid",
+                "2": "Unreliable",
+                "3": "NA"
+            }
+        }
+    }
+}

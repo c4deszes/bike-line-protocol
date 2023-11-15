@@ -1,0 +1,114 @@
+{
+    "name": "system-integration",
+    "nodes": {
+        "BodyComputer": {
+            "address": "0x0",
+            "publishes": []
+        },
+        "RotorSensor": {
+            "address": "0x1",
+            "subscribes": [
+
+            ],
+            "publishes": [
+                "WheelSpeed"
+            ]
+        }
+    },
+    "requests": {
+        "WheelSpeed": {
+            "id": "0x1000",
+            "size": 5,
+            "layout": {
+                "FrontSpeed": {
+                    "offset": 0,
+                    "width": 16,
+                    "encoder": ""
+                },
+                "RearSpeed": {
+                    "offset": 16,
+                    "width": 16,
+                    "encoder": ""
+                },
+                "FrontSpeedUnreliable": {
+
+                },
+                "RearSpeedUnreliable": {
+
+                },
+                "FrontWheelBrake": {
+
+                },
+                "RearWheelBrake": {
+
+                },
+                "FrontWheelLockup": {
+
+                },
+                "RearWheelLockup": {
+
+                },
+                "FrontWheelSlip": {
+
+                },
+                "RearWheelSlip": {
+
+                }
+            }
+        },
+        "RideStatus": {
+            "id": "0x1001",
+            "size": 4,
+            "layout": {
+                "RideDistance": {
+                    "offset": 0,
+                    "width": 32
+                },
+                "iTPMS_State": {
+                    "offset": 33,
+                    "width": 2
+                }
+            }
+        },
+        "SensorStatus": {
+            "id": "0x1002",
+            "size": 1,
+            "layout": {
+                "FrontSensorStatus": {
+                    "offset": 0,
+                    "width": 4
+                }
+            }
+        },
+        "RideReset": {
+            "id": "0x1004",
+            "size": 1,
+            "layout": {
+                
+            }
+        },
+        "iTPMS_Reset": {
+            "id": "0x1005",
+            "size": 1,
+            "layout": {
+                
+            }
+        },
+        "SensorReset": {
+
+        }
+    },
+    "encoders": {
+        "WheelSpeedEncoder": {
+            "type": "formula",
+            "formula": "value * 1000"
+        },
+        "FrontSpeedUnreliable": {
+            "type": "mapping",
+            "mapping": {
+                "0": "Valid",
+                "1": "Unreliable"
+            }
+        }
+    }
+}

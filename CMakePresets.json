@@ -1,0 +1,39 @@
+{
+    "version": 2,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "mingw-default",
+            "generator": "MinGW Makefiles",
+            "binaryDir": "${sourceDir}/_build/${presetName}",
+            "cacheVariables": {}
+        },
+        {
+            "name": "gcc-default",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/_build/${presetName}",
+            "cacheVariables": {}
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-gcc",
+            "configurePreset": "gcc-default",
+            "targets": [
+                "test_TransportReceive",
+                "test_ApplicationInterface",
+                "test_ApplicationSignals"
+            ]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-gcc",
+            "configurePreset": "gcc-default"
+        }
+    ]
+}

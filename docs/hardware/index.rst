@@ -1,0 +1,6 @@
+Hardware design
+===============
+
+.. toctree::
+
+    device

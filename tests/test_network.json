@@ -1,0 +1,85 @@
+{
+    "name": "test-network",
+    "nodes": {
+        "Main": {
+            "address": "0x0",
+            "subscribes": [],
+            "publishes": [
+                "Aligned"
+            ]
+        },
+        "Peripheral_1": {
+            "address": "0x1",
+            "subscribes": [
+                "Aligned"
+            ],
+            "publishes": [
+                "Wide",
+                "Mixed"
+            ]
+        }
+    },
+    "requests": {
+        "Aligned": {
+            "id": "0x1000",
+            "size": "4",
+            "layout": {
+                "First": {
+                    "offset": 0,
+                    "width": 8
+                },
+                "Second": {
+                    "offset": 8,
+                    "width": 8
+                },
+                "Third": {
+                    "offset": 16,
+                    "width": 16
+                }
+            }
+        },
+        "Wide": {
+            "id": "0x1001",
+            "size": "4",
+            "layout": {
+                "First": {
+                    "offset": 0,
+                    "width": 32
+                }
+            }
+        },
+        "Mixed": {
+            "id": "0x1002",
+            "size": "2",
+            "layout": {
+                "First": {
+                    "offset": 0,
+                    "width": 4
+                },
+                "Second": {
+                    "offset": 4,
+                    "width": 4
+                },
+                "Third": {
+                    "offset": 8,
+                    "width": 2
+                },
+                "Fourth": {
+                    "offset": 10,
+                    "width": 1
+                },
+                "Fifth": {
+                    "offset": 11,
+                    "width": 1
+                },
+                "Sixth": {
+                    "offset": 12,
+                    "width": 4
+                }
+            }
+        }
+    },
+    "encoders": {
+
+    }
+}
