@@ -2,6 +2,8 @@ Sphinx
 ipython
 ipykernel
 jupyter-sphinx
+numpy
+UliEngineering
 matplotlib
 sphinx-rtd-theme
 sphinxcontrib-jsmath

@@ -5,9 +5,6 @@ Master device
     :hide-code:
 
     %config InlineBackend.figure_format = 'svg'
-    import schemdraw
-    from schemdraw import elements as elm
-    from schemdraw import flow
     import numpy as np
     from matplotlib import pyplot
     from IPython.display import Latex
