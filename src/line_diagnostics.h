@@ -53,14 +53,51 @@ typedef struct {
     uint8_t patch;
 } LINE_Diag_SoftwareVersion_t;
 
+/**
+ * @brief Initializes the diagnostic layer, without it the peripheral won't listen or respond to
+ *        unicast requests only broadcast ones.
+ * 
+ * @param diag_address Diagnostic address
+ */
 void LINE_Diag_Init(uint8_t diag_address);
 
+/**
+ * @brief Returns whether the peripheral is responding to the diagnostic (unicast) request
+ * 
+ * @param request Request code
+ * @return true When a respond will be sent
+ * @return false When a response won't be sent by the peripheral
+ */
 bool LINE_Diag_RespondsTo(uint16_t request);
 
+/**
+ * @brief Prepares the response to a diagnostic request
+ * 
+ * @param request Request code
+ * @param size Pointer to the size
+ * @param payload Pointer to the payload content
+ * @return true When the response was successfully prepared
+ * @return false When not responding or errors during response preparation
+ */
 bool LINE_Diag_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
 
+/**
+ * @brief Returns whether the peripheral is listening to the request
+ * 
+ * @param request Request code
+ * @return true If the callback for the request should be called
+ * @return false Otherwise
+ */
 bool LINE_Diag_ListensTo(uint16_t request);
 
+/**
+ * @brief Called when a diagnostic request is received, only called in case of broadcast requests
+ *        and unicast requests that the peripheral is listening to
+ * 
+ * @param request Request code
+ * @param size Size of the payload
+ * @param payload Payload
+ */
 void LINE_Diag_OnRequest(uint16_t request, uint8_t size, uint8_t* payload);
 
 void LINE_Diag_OnWakeup(void);
