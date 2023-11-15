@@ -2,8 +2,8 @@
 #include "fff.h"
 
 extern "C" {
-    #include "line/application.h"
-    #include "line/diagnostics.h"
+    #include "line_application.h"
+    #include "line_diagnostics.h"
     #include "line_api.h"
 }
 
