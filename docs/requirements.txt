@@ -1,5 +1,6 @@
 Sphinx
 ipython
+ipykernel
 jupyter-sphinx
 matplotlib
 sphinx-rtd-theme

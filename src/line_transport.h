@@ -59,14 +59,7 @@ void LINE_Transport_Update(uint8_t elapsed);
  */
 bool LINE_Transport_RespondsTo(uint16_t request);
 
-/**
- * @brief 
- * 
- * @param request 
- * @param size 
- * @param payload 
- */
-void LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
+bool LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
 
 void LINE_Transport_WriteResponse(uint8_t size, uint8_t* payload, uint8_t checksum);
 

@@ -33,7 +33,10 @@
     "testPresets": [
         {
             "name": "test-gcc",
-            "configurePreset": "gcc-default"
+            "configurePreset": "gcc-default",
+            "output": {
+                "outputOnFailure": true
+            }
         }
     ]
 }

@@ -31,7 +31,7 @@ void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_
   }
 }
 
-void LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload) {
+bool LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload) {
   LINE_App_PrepareResponse(request, size, payload);
   Serial.println("Prepared response.");
 }
