@@ -21,12 +21,14 @@ extern "C"
 #define LINE_DIAG_REQUEST_SLEEP  0x0100
 #define LINE_DIAG_REQUEST_SHUTDOWN 0x0101
 
-// Unicast frames
-#define LINE_DIAG_REQUEST_OP_STATUS 0x0110
-#define LINE_DIAG_REQUEST_POWER_STATUS 0x0120
-#define LINE_DIAG_REQUEST_SERIAL_NUMBER 0x0130
-#define LINE_DIAG_REQUEST_SW_NUMBER 0x0140
-#define LINE_DIAG_REQUEST_SW_RESET 0x0150
+// Unicast frames (mandatory)
+#define LINE_DIAG_REQUEST_OP_STATUS 0x0200
+#define LINE_DIAG_REQUEST_POWER_STATUS 0x0210
+#define LINE_DIAG_REQUEST_SERIAL_NUMBER 0x0220
+#define LINE_DIAG_REQUEST_SW_NUMBER 0x0230
+
+// Unicast frames (optional)
+#define LINE_DIAG_REQUEST_SW_RESET 0x0240
 
 #define LINE_DIAG_REQUEST_OP_STATUS_OK 0
 #define LINE_DIAG_REQUEST_OP_STATUS_WARN 1
@@ -100,18 +102,57 @@ bool LINE_Diag_ListensTo(uint16_t request);
  */
 void LINE_Diag_OnRequest(uint16_t request, uint8_t size, uint8_t* payload);
 
+/**
+ * @brief Called when the wakeup diagnostic request is received
+ * 
+ * @note No implementation is required, default implementation is empty
+ */
 void LINE_Diag_OnWakeup(void);
 
+/**
+ * @brief Called when the sleep diagnostic request is received
+ * 
+ * @note No implementation is required, default implementation is empty
+ */
 void LINE_Diag_OnSleep(void);
 
+/**
+ * @brief Called when the shutdown diagnostic request is received
+ * 
+ * @note No implementation is required, default implementation is empty
+ */
 void LINE_Diag_OnShutdown(void);
 
+/**
+ * @brief Returns the current operational status code (ok, warn, error)
+ * @note Implementation is required
+ * 
+ * @return uint8_t Status code
+ */
 uint8_t LINE_Diag_GetOperationStatus(void);
 
+/**
+ * @brief Returns the power status of the device (voltage, bod, current consumption)
+ * @note Implementation is required
+ * 
+ * @return LINE_Diag_PowerStatus_t* pointer to the 
+ */
 LINE_Diag_PowerStatus_t* LINE_Diag_GetPowerStatus(void);
 
+/**
+ * @brief Returns the serial number of the device
+ * @note Implementation is required
+ * 
+ * @return uint32_t Serial number
+ */
 uint32_t LINE_Diag_GetSerialNumber(void);
 
+/**
+ * @brief Returns the software version on the device (major, minor patch)
+ * @note Implementation is required
+ * 
+ * @return LINE_Diag_SoftwareVersion_t* Pointer to the software version
+ */
 LINE_Diag_SoftwareVersion_t* LINE_Diag_GetSoftwareVersion(void);
 
 #ifdef __cplusplus

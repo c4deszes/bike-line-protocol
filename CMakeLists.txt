@@ -23,6 +23,11 @@ target_sources(line-protocol-sources INTERFACE
     src/diagnostics.c
 )
 
+add_library(line-protocol-adapter-sources INTERFACE)
+target_sources(line-protocol-sources INTERFACE
+    src/app_adapter.c
+)
+
 add_library(line-protocol-lib STATIC EXCLUDE_FROM_ALL)
 target_link_libraries(line-protocol-lib PRIVATE line-protocol-sources)
 target_link_libraries(line-protocol-lib PUBLIC line-protocol-api)

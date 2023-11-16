@@ -20,22 +20,6 @@ void LINE_Transport_OnError(bool response, uint16_t request, protocol_transport_
   }
 }
 
-void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_t* payload) {
-  if (!response) {
-    LINE_App_OnRequest(request, size, payload);
-
-    Serial.println("Received frame.");
-  }
-  else {
-    Serial.println("Sent frame.");
-  }
-}
-
-bool LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload) {
-  LINE_App_PrepareResponse(request, size, payload);
-  Serial.println("Prepared response.");
-}
-
 void LINE_Transport_WriteResponse(uint8_t size, uint8_t* payload, uint8_t checksum) {
   Serial1.write(size);
   for (int i=0;i<size;i++) {
@@ -44,10 +28,6 @@ void LINE_Transport_WriteResponse(uint8_t size, uint8_t* payload, uint8_t checks
   Serial1.write(checksum);
   Serial1.flush();
   Serial.println("Sent response.");
-}
-
-bool LINE_Transport_RespondsTo(uint16_t request) {
-  return LINE_App_RespondsTo(request);
 }
 
 void setup() {

@@ -22,7 +22,7 @@ Request codes
 Broadcast requests address all peripherals, the data is provided by the master.
 
 Unicast requests address a specific peripheral, the lowest nibble is used as the address.
-``0`` and ``0xFF`` are reserved, therefore 14 devices supporting unicast requests can be on the
+``0`` and ``0xF`` are reserved, therefore 14 devices supporting unicast requests can be on the
 same network.
 
 Lifecycle operations
@@ -66,6 +66,8 @@ The following states shall be reported back:
 * Warning: the device is experiencing some malfunction but the reported signals are valid
 * Error: the device is experiencing major or multiple malfunctions, the reported signals are unreliable
 
+Request code is ``0x020X``, the response length is 1 byte.
+
 Get power status
 ~~~~~~~~~~~~~~~~
 
@@ -92,7 +94,7 @@ The sleep current is encoded differently as they are mostly sub-milliampere valu
 
 * 130 means 1.3mA is the peripheral's sleep current (which is quite high)
 
-Request code is ``0x1144``, the length is 4 bytes.
+Request code is ``0x021X``, the response length is 4 bytes.
 
 Metainformation
 ---------------
@@ -100,7 +102,9 @@ Metainformation
 Get Serial Number
 ~~~~~~~~~~~~~~~~~
 
+**Mandatory**
+
 Get Software Version
 ~~~~~~~~~~~~~~~~~~~~
 
-
+**Mandatory**
