@@ -1,6 +1,6 @@
 from typing import List
 import serial
-from .util import create_frame, create_header, request_code
+from .util import create_frame, create_header
 import logging
 import time
 from .constants import LINE_REQUEST_TIMEOUT, LINE_DATA_TIMEOUT
@@ -22,7 +22,6 @@ class LineTransportDataError(LineTransportError):
 class LineSerialTransport():
 
     def __init__(self, port: str, baudrate: int = 19200, one_wire: bool = True) -> None:
-        # TODO: add one wire option
         self.port = port
         self.baudrate = baudrate
         self.one_wire = one_wire
@@ -30,7 +29,6 @@ class LineSerialTransport():
 
     def __enter__(self) -> 'LineSerialTransport':
         self._serial.port = self.port
-        self._serial.dtr = False
         self._serial.open()
         return self
 

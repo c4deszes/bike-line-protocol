@@ -10,7 +10,6 @@ include(GoogleTest)
 add_subdirectory(lib/googletest)
 add_subdirectory(lib/fff)
 
-# Target
 add_library(line-protocol-api INTERFACE)
 target_include_directories(line-protocol-api INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -24,7 +23,7 @@ target_sources(line-protocol-sources INTERFACE
 )
 
 add_library(line-protocol-adapter-sources INTERFACE)
-target_sources(line-protocol-sources INTERFACE
+target_sources(line-protocol-adapter-sources INTERFACE
     src/app_adapter.c
 )
 
@@ -55,40 +54,7 @@ cmake_parse_arguments(
     add_dependencies(${_TARGET} line-codegen-${_TARGET})
 endfunction()
 
-# Testing
-function(add_test TARGET)
-    target_compile_options(${TARGET} PRIVATE $<$<COMPILE_LANGUAGE:C>:--coverage>)
-    target_link_libraries(${TARGET} PRIVATE line-protocol-api)
-    target_link_libraries(${TARGET} PRIVATE gtest fff gcov)
-    gtest_discover_tests(${TARGET} DISCOVERY_MODE POST_BUILD)
-endfunction()
-
-add_executable(test_TransportReceive EXCLUDE_FROM_ALL)
-target_sources(test_TransportReceive PRIVATE
-    src/transport.c
-    tests/test_TransportReceive.cpp
-)
-add_test(test_TransportReceive)
-
-add_executable(test_ApplicationInterface EXCLUDE_FROM_ALL)
-target_sources(test_ApplicationInterface PRIVATE
-    src/application.c
-    tests/test_ApplicationInterface.cpp
-)
-add_test(test_ApplicationInterface)
-
-line_codegen(
-    TARGET test_network
-    NETWORK tests/test_network.json
-    NODE Peripheral_1
-)
-add_executable(test_ApplicationSignals EXCLUDE_FROM_ALL)
-target_sources(test_ApplicationSignals PRIVATE
-    src/application.c
-    tests/test_ApplicationSignals.cpp
-)
-add_test(test_ApplicationSignals)
-target_link_libraries(test_ApplicationSignals PRIVATE test_network)
+add_subdirectory(tests)
 
 add_custom_target(
     coverage

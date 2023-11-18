@@ -5,14 +5,14 @@ uint8_t LINE_Diag_GetOperationStatus(void) {
   return LINE_DIAG_REQUEST_OP_STATUS_OK;
 }
 
-void LINE_Transport_OnError(bool response, uint16_t request, protocol_transport_error error_type) {
-  if (error_type == protocol_transport_error_timeout) {
+void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) {
+  if (error_type == line_transport_error_timeout) {
     Serial.println("Timeout.");
   }
-  else if (error_type == protocol_transport_error_header_invalid) {
+  else if (error_type == line_transport_error_header_invalid) {
     Serial.println("Header error.");
   }
-  else if (error_type == protocol_transport_error_data_invalid) {
+  else if (error_type == line_transport_error_data_invalid) {
     Serial.println("Checksum error.");
   }
   else {
@@ -55,7 +55,7 @@ void loop() {
   }
   uint32_t currentTime = millis();
   uint32_t diff = currentTime - transport_timer;
-  if (diff > 5) {
+  if (diff >= 1) {
     LINE_Transport_Update(diff);
     transport_timer = currentTime;
   }
