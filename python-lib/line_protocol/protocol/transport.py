@@ -1,6 +1,6 @@
 from typing import List
 import serial
-from .util import create_frame, create_header
+from .util import create_frame, create_header, data_checksum
 import logging
 import time
 from .constants import LINE_REQUEST_TIMEOUT, LINE_DATA_TIMEOUT
@@ -35,11 +35,10 @@ class LineSerialTransport():
     def request_data(self, request: int) -> List[int]:
         header = create_header(request)
         self._serial.write(header)
-        logger.debug("TX DATA %s", hex(int.from_bytes(header)))
         logger.debug("TX REQ 0x%04X", request)
 
         if self.one_wire:
-            time.sleep(0.1)
+            time.sleep(0.5)     # TODO: adjust duration
             self._serial.read(len(header))
 
         start = time.time()
@@ -58,25 +57,43 @@ class LineSerialTransport():
         while time.time() - start < LINE_DATA_TIMEOUT and len(data) < size:
             a = self._serial.read(1)
             if len(a) == 1:
-                data.append(a)
+                data.append(a[0])
+                start = time.time()
 
         if len(data) != size:
-            logger.error('RX Timeout! data=%s', data)
+            logger.error('RX Timeout! LEN=%d DATA=%s', size, data)
+            raise LineTransportTimeout()
+        
+        checksum = None
+        start = time.time()
+        while time.time() - start < LINE_DATA_TIMEOUT:
+            a = self._serial.read(1)
+            if len(a) == 1:
+                checksum = a[0]
+                break
+
+        if checksum is None:
+            logger.error('RX Timeout! No checksum received.')
             raise LineTransportTimeout()
 
-        logger.debug("RX LEN=%d DATA=%s", size, data)
+        logger.debug("RX LEN=%d DATA=%s CHK=%02X", size, data, checksum)
+
+        if data_checksum(data) != checksum:
+            logger.error('RX Checksum error!')
+            raise LineTransportDataError('Invalid checksum.')
 
         return data
 
-    def send_data(self, request: int, data: List[int]):
-        frame = create_frame(request, data)
+    def send_data(self, request: int, data: List[int], checksum: int = None):
+        frame = create_frame(request, data, checksum)
 
         self._serial.write(frame)
-        logger.debug("TX REQ 0x%04X LEN=%d DATA=%s", request, len(data), data)
+        logger.debug("TX REQ 0x%04X LEN=%d DATA=%s CHK=%s", request, len(data), data, 'ok' if checksum is None else hex(checksum))
         
         time.sleep(0.1)
         # TODO: only read in one wire mode
-        self._serial.read(len(frame))
+        if self.one_wire:
+            self._serial.read(len(frame))
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._serial.close()

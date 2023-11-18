@@ -27,9 +27,9 @@ def create_header(request: int) -> bytearray:
     request = request_code(request)
     return bytearray([LINE_SYNC_BYTE, (request & 0xFF00) >> 8, request & 0xFF])
 
-def create_frame(request: int, data: List[int]) -> bytearray:
+def create_frame(request: int, data: List[int], checksum: int = None) -> bytearray:
     request = request_code(request)
-    checksum = data_checksum(data)
+    checksum = data_checksum(data) if checksum is None else checksum
     return bytearray([LINE_SYNC_BYTE,
                       (request & 0xFF00) >> 8,
                       request & 0xFF,
