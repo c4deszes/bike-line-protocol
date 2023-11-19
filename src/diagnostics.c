@@ -47,11 +47,13 @@ bool LINE_Diag_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload
 }
 
 bool LINE_Diag_ListensTo(uint16_t request) {
+    if (request == LINE_DIAG_REQUEST_WAKEUP) {
+        return true;
+    }
     if (request > LINE_DIAG_BROADCAST_ID_MIN && request < LINE_DIAG_BROADCAST_ID_MAX) {
         return true;
     }
-    
-    if (request > LINE_DIAG_UNICAST_ID_MIN && request < LINE_DIAG_BROADCAST_ID_MAX) {
+    if (request > LINE_DIAG_UNICAST_ID_MIN && request < LINE_DIAG_UNICAST_ID_MAX) {
         return true;
     }
 

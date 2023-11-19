@@ -5,6 +5,18 @@ uint8_t LINE_Diag_GetOperationStatus(void) {
   return LINE_DIAG_REQUEST_OP_STATUS_OK;
 }
 
+void LINE_Diag_OnWakeup(void) {
+  Serial.println("Waking up.");
+}
+
+void LINE_Diag_OnSleep(void) {
+  Serial.println("Going to sleep.");
+}
+
+void LINE_Diag_OnShutdown(void) {
+  Serial.println("Shutting down.");
+}
+
 void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) {
   if (error_type == line_transport_error_timeout) {
     Serial.println("Timeout.");
@@ -66,4 +78,7 @@ void loop() {
   else {
     digitalWrite(8, LOW);
   }
+
+  LINE_Request_AnalogRead_data.fields.Value = analogRead(A0);
+
 }
