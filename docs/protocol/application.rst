@@ -1,5 +1,5 @@
-LINE Application layer
-======================
+Application layer
+=================
 
 Request codes
 -------------

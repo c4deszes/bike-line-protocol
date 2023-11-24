@@ -1,5 +1,5 @@
-Line Master communication stack
-===============================
+Communication stack
+===================
 
 .. toctree::
 

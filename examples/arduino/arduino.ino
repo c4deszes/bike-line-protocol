@@ -1,8 +1,34 @@
 #include "line_protocol.h"
 #include "line_api.h"
 
+LINE_Diag_SoftwareVersion_t sw_version = {
+  .major = 0,
+  .minor = 1,
+  .patch = 0,
+  .reserved = 0
+};
+
+LINE_Diag_PowerStatus_t power_status = {
+  .U_status = LINE_DIAG_POWER_STATUS_VOLTAGE_OK,
+  .BOD_status = LINE_DIAG_POWER_STATUS_BOD_NONE,
+  .I_operating = LINE_DIAG_POWER_STATUS_OP_CURRENT(100),  // 100mA
+  .I_sleep = LINE_DIAG_POWER_STATUS_SLEEP_CURRENT(20)    // 20uA
+};
+
 uint8_t LINE_Diag_GetOperationStatus(void) {
-  return LINE_DIAG_REQUEST_OP_STATUS_OK;
+  return LINE_DIAG_OP_STATUS_OK;
+}
+
+LINE_Diag_PowerStatus_t* LINE_Diag_GetPowerStatus(void) {
+  return &power_status;
+}
+
+uint32_t LINE_Diag_GetSerialNumber(void) {
+  return 0xDEADBEEF;
+}
+
+LINE_Diag_SoftwareVersion_t* LINE_Diag_GetSoftwareVersion(void) {
+  return &sw_version;
 }
 
 void LINE_Diag_OnWakeup(void) {
@@ -49,6 +75,7 @@ void setup() {
   Serial1.begin(19200);
 
   LINE_App_Init();
+  LINE_Diag_Init(0x4);
   LINE_Transport_Init(true);
 
   pinMode(8, OUTPUT);

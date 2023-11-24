@@ -57,16 +57,16 @@ void LINE_Transport_Update(uint8_t elapsed) {
         currentState == protocol_state_wait_request_lsb) {
         if (timestamp - lastReceived > LINE_REQUEST_TIMEOUT) {
             // TODO: error?
-            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_timeout);
             currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_timeout);
         }
     }
     else if(currentState == protocol_state_wait_size ||
             currentSize == protocol_state_wait_data ||
             currentState == protocol_state_wait_data_checksum) {
         if (timestamp - lastReceived > LINE_DATA_TIMEOUT) {
-            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_timeout);
             currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_timeout);
         }
     }
 }
@@ -99,8 +99,9 @@ void LINE_Transport_Receive(uint8_t data) {
 
                 if (!isOneWire && currentResponding) {
                     // In Two-wire mode when responding
-                    LINE_Transport_WriteResponse(outSize, outData, checksum);
+                    // TODO: might have to change state only after response has been flushed
                     currentState = protocol_state_wait_sync;
+                    LINE_Transport_WriteResponse(outSize, outData, checksum);
                 }
                 else if(currentResponding) {
                     // In One-wire mode it receives the data sent out so the statemachine has to continue
@@ -113,8 +114,8 @@ void LINE_Transport_Receive(uint8_t data) {
             }
         }
         else {
-            LINE_Transport_OnError(false, currentRequest, line_transport_error_header_invalid);
             currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(false, currentRequest, line_transport_error_header_invalid);
         }
     }
     else if(currentState == protocol_state_wait_size) {
@@ -144,12 +145,12 @@ void LINE_Transport_Receive(uint8_t data) {
         // if check
         if (checksum == calculatedChecksum) {
             // TODO: call with null pointer if no data was sent
-            LINE_Transport_OnData(currentResponding, currentRequest, currentSize, dataBuffer);
             currentState = protocol_state_wait_sync;
+            LINE_Transport_OnData(currentResponding, currentRequest, currentSize, dataBuffer);
         }
         else {
-            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_data_invalid);
             currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_data_invalid);
         }
     }
 }
