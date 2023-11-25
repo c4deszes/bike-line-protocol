@@ -10,13 +10,17 @@
             "name": "mingw-default",
             "generator": "MinGW Makefiles",
             "binaryDir": "${sourceDir}/_build/${presetName}",
-            "cacheVariables": {}
+            "cacheVariables": {
+                "LINE_PROTOCOL_BUILD_TESTS": "ON"
+            }
         },
         {
             "name": "gcc-default",
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/_build/${presetName}",
-            "cacheVariables": {}
+            "cacheVariables": {
+                "LINE_PROTOCOL_BUILD_TESTS": "ON"
+            }
         }
     ],
     "buildPresets": [

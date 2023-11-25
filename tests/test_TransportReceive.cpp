@@ -9,7 +9,7 @@ DEFINE_FFF_GLOBALS;
 
 // 
 FAKE_VOID_FUNC4(LINE_Transport_OnData, bool, uint16_t, uint8_t, uint8_t*);
-FAKE_VOID_FUNC3(LINE_Transport_OnError, bool, uint16_t, protocol_transport_error);
+FAKE_VOID_FUNC3(LINE_Transport_OnError, bool, uint16_t, line_transport_error);
 FAKE_VOID_FUNC3(LINE_Transport_WriteResponse, uint8_t, uint8_t*, uint8_t);
 
 FAKE_VALUE_FUNC3(bool, LINE_Transport_PrepareResponse, uint16_t, uint8_t*, uint8_t*);
@@ -83,7 +83,7 @@ TEST_F(TestTransportLayerReceive, NotRespondingDataError) {
     EXPECT_EQ(LINE_Transport_RespondsTo_fake.call_count, 1);
     EXPECT_EQ(LINE_Transport_OnData_fake.call_count, 0);
     EXPECT_EQ(LINE_Transport_OnError_fake.call_count, 1);
-    EXPECT_EQ(LINE_Transport_OnError_fake.arg2_val, protocol_transport_error_data_invalid);
+    EXPECT_EQ(LINE_Transport_OnError_fake.arg2_val, line_transport_error_data_invalid);
 }
 
 TEST_F(TestTransportLayerReceive, NotRespondingHeaderTimeout) {
@@ -100,7 +100,7 @@ TEST_F(TestTransportLayerReceive, NotRespondingHeaderTimeout) {
     EXPECT_EQ(LINE_Transport_RespondsTo_fake.call_count, 0);
     EXPECT_EQ(LINE_Transport_OnData_fake.call_count, 0);
     EXPECT_EQ(LINE_Transport_OnError_fake.call_count, 1);
-    EXPECT_EQ(LINE_Transport_OnError_fake.arg2_val, protocol_transport_error_timeout);
+    EXPECT_EQ(LINE_Transport_OnError_fake.arg2_val, line_transport_error_timeout);
 }
 
 TEST_F(TestTransportLayerReceive, NotRespondingLateHeader) {
@@ -121,7 +121,7 @@ TEST_F(TestTransportLayerReceive, NotRespondingLateHeader) {
     EXPECT_EQ(LINE_Transport_RespondsTo_fake.call_count, 0);
     EXPECT_EQ(LINE_Transport_OnData_fake.call_count, 0);
     EXPECT_EQ(LINE_Transport_OnError_fake.call_count, 1);
-    EXPECT_EQ(LINE_Transport_OnError_fake.arg2_val, protocol_transport_error_timeout);
+    EXPECT_EQ(LINE_Transport_OnError_fake.arg2_val, line_transport_error_timeout);
 }
 
 TEST_F(TestTransportLayerReceive, NotRespondingDataTimeout) {
@@ -138,7 +138,7 @@ TEST_F(TestTransportLayerReceive, NotRespondingDataTimeout) {
     EXPECT_EQ(LINE_Transport_RespondsTo_fake.call_count, 1);
     EXPECT_EQ(LINE_Transport_OnData_fake.call_count, 0);
     EXPECT_EQ(LINE_Transport_OnError_fake.call_count, 1);
-    EXPECT_EQ(LINE_Transport_OnError_fake.arg2_val, protocol_transport_error_timeout);
+    EXPECT_EQ(LINE_Transport_OnError_fake.arg2_val, line_transport_error_timeout);
 }
 
 int main(int argc, char **argv) {

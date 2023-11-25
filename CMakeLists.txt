@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.20)
 project(line-protocol LANGUAGES C CXX)
 
-enable_testing()
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+# Determine if building repository or t
+# set(LINE_PROT_STANDALONE_PROJECT OFF)
+# if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+#     set(LINE_PROT_STANDALONE_PROJECT ON)
+# endif()
+
+option(LINE_PROTOCOL_BUILD_TESTS "Enables library test cases" OFF)
 
 find_package(Python REQUIRED)
-
-include(GoogleTest)
-add_subdirectory(lib/googletest)
-add_subdirectory(lib/fff)
-
 add_library(line-protocol-api INTERFACE)
 target_include_directories(line-protocol-api INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -54,16 +54,34 @@ cmake_parse_arguments(
     add_dependencies(${_TARGET} line-codegen-${_TARGET})
 endfunction()
 
-add_subdirectory(tests)
+if(LINE_PROTOCOL_BUILD_TESTS)
+    enable_testing()
+    include(FetchContent)
+    include(GoogleTest)
 
-add_custom_target(
-    coverage
-    COMMAND ${Python_EXECUTABLE} -m gcovr --html-self-contained --html-details ${CMAKE_BINARY_DIR}/coverage.html
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG        release-1.12.0
+    )
+    FetchContent_Declare(
+        fff
+        GIT_REPOSITORY https://github.com/meekrosoft/fff.git
+        GIT_TAG        5111c61e1ef7848e3afd3550044a8cf4405f4199
+    )
 
-add_custom_target(
-    docs
-    COMMAND ${Python_EXECUTABLE} -m sphinx -b html -E ${CMAKE_CURRENT_SOURCE_DIR}/docs ${CMAKE_CURRENT_SOURCE_DIR}/docs/_build
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
+    FetchContent_MakeAvailable(googletest fff)
+    add_subdirectory(tests)
+
+    add_custom_target(
+        coverage
+        COMMAND ${Python_EXECUTABLE} -m gcovr --html-self-contained --html-details ${CMAKE_BINARY_DIR}/coverage.html
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
+    add_custom_target(
+        docs
+        COMMAND ${Python_EXECUTABLE} -m sphinx -b html -E ${CMAKE_CURRENT_SOURCE_DIR}/docs ${CMAKE_CURRENT_SOURCE_DIR}/docs/_build
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
