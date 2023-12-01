@@ -27,6 +27,7 @@ target_sources(line-protocol-adapter-sources INTERFACE
     src/app_adapter.c
 )
 
+# TODO: is this target needed?
 add_library(line-protocol-lib STATIC EXCLUDE_FROM_ALL)
 target_link_libraries(line-protocol-lib PRIVATE line-protocol-sources)
 target_link_libraries(line-protocol-lib PUBLIC line-protocol-api)
@@ -35,7 +36,7 @@ function(line_codegen)
 
 cmake_parse_arguments(
     ""
-    ""
+    "ADAPTER"
     "TARGET;NETWORK;NODE"
     ""
     ${ARGN}
@@ -45,12 +46,17 @@ cmake_parse_arguments(
     add_custom_target(
         line-codegen-${_TARGET}
         COMMAND ${Python_EXECUTABLE} -m line_protocol.codegen ${_NETWORK} --node ${_NODE} --output ${line_codegen_dir}
+        DEPENDS ${_NETWORK}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         BYPRODUCTS ${line_codegen_dir}/line_api.c ${line_codegen_dir}/line_api.h
     )
     add_library(${_TARGET} INTERFACE)
     target_sources(${_TARGET} INTERFACE ${line_codegen_dir}/line_api.c)
     target_include_directories(${_TARGET} INTERFACE ${line_codegen_dir})
+    target_link_libraries(${_TARGET} INTERFACE line-protocol-adapter-sources line-protocol-adapter-api)
+    if(${_ADAPTER})
+        target_link_libraries(${_TARGET} INTERFACE line-protocol-adapter-sources)
+    endif()
     add_dependencies(${_TARGET} line-codegen-${_TARGET})
 endfunction()
 

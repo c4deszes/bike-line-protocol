@@ -58,3 +58,25 @@ one-wire nature of the physical layer.
             // Call diagnostic function
         }
     }
+
+CMake using CPM/subdirectories
+------------------------------
+
+.. code-block:: cmake
+
+    include(tools/cmake/CPM.cmake)
+    CPMAddPackage("gh:c4deszes/bike-line-protocol#feature/first-version")
+
+    # This function creates the codegen target and an interface library
+    # which includes all sources and includes
+    line_codegen(
+        TARGET protocol-stack-api
+        NETWORK config/network.json
+        NODE CustomPeripheral
+        ADAPTER
+    )
+    
+    # You can then create a real target which inherits the interface's properties
+    # The microcontroller specific 
+    add_library(protocol-stack STATIC)
+    target_link_libraries(protocol-stack PUBLIC protocol-stack-api)
