@@ -17,14 +17,14 @@ target_include_directories(line-protocol-api INTERFACE
 
 add_library(line-protocol-sources INTERFACE)
 target_sources(line-protocol-sources INTERFACE
-    src/transport.c
-    src/application.c
-    src/diagnostics.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/transport.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/application.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.c
 )
 
 add_library(line-protocol-adapter-sources INTERFACE)
 target_sources(line-protocol-adapter-sources INTERFACE
-    src/app_adapter.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/app_adapter.c
 )
 
 # TODO: is this target needed?
@@ -53,7 +53,7 @@ cmake_parse_arguments(
     add_library(${_TARGET} INTERFACE)
     target_sources(${_TARGET} INTERFACE ${line_codegen_dir}/line_api.c)
     target_include_directories(${_TARGET} INTERFACE ${line_codegen_dir})
-    target_link_libraries(${_TARGET} INTERFACE line-protocol-adapter-sources line-protocol-adapter-api)
+    target_link_libraries(${_TARGET} INTERFACE line-protocol-adapter-sources line-protocol-api)
     if(${_ADAPTER})
         target_link_libraries(${_TARGET} INTERFACE line-protocol-adapter-sources)
     endif()
