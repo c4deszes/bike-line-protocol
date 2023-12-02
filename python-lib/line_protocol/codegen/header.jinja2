@@ -3,15 +3,19 @@
 
 #include <stdint.h>
 
-{% for request in node.publishes -%}
+{% for node in network.nodes %}
+#define LINE_NODE_{{node.name}}_DIAG_ADDRESS 0x{{'%01X' % node.address}}
+{% endfor %}
+
+{% for request in node.publishes %}
 #define LINE_REQUEST_{{request.name}}_ID 0x{{'%04X' % request.id}}
 #define LINE_REQUEST_{{request.name}}_SIZE {{request.size}}
 {% endfor %}
 
-{% for request in node.subscribes -%}
+{% for request in node.subscribes %}
 #define LINE_REQUEST_{{request.name}}_ID 0x{{'%04X' % request.id}}
 #define LINE_REQUEST_{{request.name}}_SIZE {{request.size}}
-{%- endfor %}
+{% endfor %}
 
 {% for request in node.publishes -%}
 typedef union {

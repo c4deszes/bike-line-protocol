@@ -28,9 +28,9 @@ target_sources(line-protocol-adapter-sources INTERFACE
 )
 
 # TODO: is this target needed?
-add_library(line-protocol-lib STATIC EXCLUDE_FROM_ALL)
-target_link_libraries(line-protocol-lib PRIVATE line-protocol-sources)
-target_link_libraries(line-protocol-lib PUBLIC line-protocol-api)
+# add_library(line-protocol-lib STATIC EXCLUDE_FROM_ALL)
+# target_link_libraries(line-protocol-lib PRIVATE line-protocol-sources)
+# target_link_libraries(line-protocol-lib PUBLIC line-protocol-api)
 
 function(line_codegen)
 
@@ -53,7 +53,7 @@ cmake_parse_arguments(
     add_library(${_TARGET} INTERFACE)
     target_sources(${_TARGET} INTERFACE ${line_codegen_dir}/line_api.c)
     target_include_directories(${_TARGET} INTERFACE ${line_codegen_dir})
-    target_link_libraries(${_TARGET} INTERFACE line-protocol-adapter-sources line-protocol-api)
+    target_link_libraries(${_TARGET} INTERFACE line-protocol-sources line-protocol-api)
     if(${_ADAPTER})
         target_link_libraries(${_TARGET} INTERFACE line-protocol-adapter-sources)
     endif()

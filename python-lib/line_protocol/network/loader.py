@@ -4,6 +4,11 @@ from .nodes import Node
 
 import json
 
+def to_int(value: str) -> int:
+    if isinstance(value, int):
+        return value
+    return int(value, base=0)
+
 def load_network(path: str) -> Network:
     with open(path, 'r') as f:
         data = json.load(f)
@@ -24,13 +29,13 @@ def load_network(path: str) -> Network:
             except KeyError:
                 encoder = NoneEncoder('none')
 
-            signal = Signal(sig_name, sig['offset'], sig['width'], encoder)
+            signal = Signal(sig_name, to_int(sig['offset']), to_int(sig['width']), encoder)
             signals.append(signal)
 
-        network.requests.append(Request(name, int(req['id'], base=0), int(req['size'], base=0), signals))
+        network.requests.append(Request(name, to_int(req['id']), to_int(req['size']), signals))
 
     for (name, nod) in data['nodes'].items():
-        node = Node(name, int(nod['address'], base=0))
+        node = Node(name, to_int(nod['address']))
         node.publishes = [network.get_request(x) for x in nod['publishes']]
         node.subscribes = [network.get_request(x) for x in nod['subscribes']]
         network.nodes.append(node)
