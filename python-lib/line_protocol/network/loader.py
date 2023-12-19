@@ -14,12 +14,14 @@ def load_network(path: str) -> Network:
         data = json.load(f)
 
     network = Network(data['name'])
+    network.baudrate = data['baudrate']
 
     for (name, enc) in data['encoders'].items():
         if enc['type'] == 'formula':
             network.encoders.append(FormulaEncoder(name, enc['scale'], enc['offset']))
         elif enc['type'] == 'mapping':
-            network.encoders.append(MappingEncoder(name, enc['mapping']))
+            mapping = dict([(int(k), v) for k, v in enc['mapping'].items()])
+            network.encoders.append(MappingEncoder(name, mapping))
     
     for (name, req) in data['requests'].items():
         signals = []

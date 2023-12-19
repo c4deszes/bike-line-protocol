@@ -1,9 +1,11 @@
-from typing import Literal, List
+from typing import Literal, List, Union
 from .transport import LineSerialTransport
 from .constants import *
 from ..network import Network
 from types import SimpleNamespace
 import logging
+import argparse
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +18,11 @@ class LineMaster():
         self.network = network
         self.requests = SimpleNamespace()
 
-    def request_data(self, id):
-        pass
+    def request_data(self, id: Union[int, str]):
+        data = self.transport.request_data(id)
 
-    def send_data(self, id, data):
-        pass
+    # def send_data(self, id, data):
+    #     pass
 
     def wakeup(self):
         """

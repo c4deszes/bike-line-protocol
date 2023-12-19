@@ -6,6 +6,7 @@ class Network:
 
     def __init__(self, name: str) -> None:
         self.name = name
+        self.baudrate = 0
         self.nodes = []
         self.requests = []
         self.encoders = []

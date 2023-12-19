@@ -73,6 +73,7 @@ class LineSerialTransport():
                 break
 
         if checksum is None:
+            logger.debug("RX LEN=%d DATA=%s", size, data)
             logger.error('RX Timeout! No checksum received.')
             raise LineTransportTimeout()
 

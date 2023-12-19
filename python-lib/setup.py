@@ -37,7 +37,10 @@ setup(
     },
     python_requires='!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4',
     entry_points={
-        'console_scripts': ['line-codegen=line_protocol.codegen.generator:main']
+        'console_scripts': [
+            'line-codegen=line_protocol.codegen.generator:main',
+            'line-monitor=line_protocol.protocol.cli:main'
+        ]
     },
     classifiers=[
         "Programming Language :: Python :: 3.6",
