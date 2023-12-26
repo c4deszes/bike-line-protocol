@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Union, Dict, Iterable
-import bitstruct
-import bitstring
+import ctypes
 
 class SignalEncoder:
 
@@ -27,11 +26,10 @@ class NoneEncoder(SignalEncoder):
 
 class FormulaEncoder(SignalEncoder):
 
-    def __init__(self, name: str, scale: float, offset: float, unit: str) -> None:
+    def __init__(self, name: str, scale: float, offset: float) -> None:
         super().__init__(name)
         self.scale = scale
         self.offset = offset
-        self.unit = unit
 
     def encode(self, value: float) -> int:
         return int((value - self.offset) / self.scale)
@@ -68,27 +66,44 @@ class Request():
         self.id = id
         self.size = size
         self.signals = sorted(signals, key=lambda x: x.offset)
-        self.pattern_text = Request.packer(self.signals, self.size)
-        print(self.pattern_text)
+
+        _packed = Request.packer(self.signals, self.size)
+
+        class RequestData(ctypes.LittleEndianStructure):
+            nonlocal _packed
+            _fields_ = _packed
+
+            def __init__(self, _):
+                super().__init__()
+
+            def __new__(cls, buf=None):
+                return cls.from_buffer_copy(buf)
+
+            def _to_dict(self):
+                return {field[0]: getattr(self, field[0]) for field in self._fields_}
+
+            @property
+            def fields(self):
+                return self._to_dict()
+
+        self.data_class = RequestData
 
     @staticmethod
     def packer(signals, size):
-        pattern = ''
+        fields = []
+        paddings = 0
         offset = 0
         for signal in signals:
             if offset + signal.width > size * 8:
                 raise ValueError(f'{signal.name} spans outside the frame!')
             if signal.offset != offset:
                 padding = signal.offset - offset
-                pattern += f"p{padding}"
-                offset+=padding
-            pattern += f"uint"
-            if signal.width % 8 == 0:
-                pattern += 'le'
-            pattern += f'{signal.width}'
-            offset+=signal.width
-            pattern += ','
-        return pattern
+                fields.append((f'Padding{paddings}', ctypes.c_uint16, padding))
+                paddings += 1
+                offset += padding
+            fields.append((signal.name, ctypes.c_uint16, signal.width))
+            offset += signal.width
+        return fields
     
     def get_signal(self, name: str) -> Signal:
         for x in self.signals:
@@ -97,15 +112,15 @@ class Request():
         raise KeyError()
 
     def encode(self, signals: Dict[str, Union[str, int, float]]):
+        #self.data_class.from_param()
         raise NotImplementedError()
     
     def decode_raw(self, data) -> Dict[str, int]:
-        values = bitstring.BitArray(bytes(data)).unpack(self.pattern_text)
-        return dict(zip([x.name for x in self.signals], values))
+        decoded = self.data_class(bytes(data))
+        return decoded.fields
 
     def decode(self, data: Iterable[int]) -> Dict[str, Union[int, str, float]]:
         values = self.decode_raw(data)
-        print(values)
         for key in values.keys():
             values[key] = self.get_signal(key).encoder.decode(values[key])
         return values

@@ -22,7 +22,7 @@ def main():
     with LineSerialTransport(args.port, baudrate=network.baudrate, one_wire=True) as transport:
         master = LineMaster(transport)
 
-        for _ in range(10):
+        for _ in range(100):
             data = master.transport.request_data(0x1000)
             request = network.get_request('SpeedStatus')
             print(request.decode(data))
