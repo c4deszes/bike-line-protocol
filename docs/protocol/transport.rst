@@ -55,3 +55,48 @@ Checksum
 
 Checksum is used to validate that the message was not disturbed. It's calculated as the sum of all
 bytes in the Size and Payload fields, the calculation is offset by the constant ``0xA3``.
+
+Parity calculation
+------------------
+
+The 2 bits of parity in the request code are calculated separately.
+
+The first bit is set to 1 if the number of 1's in the request code is odd.
+
+The second bit is set to 1 if the number of 1's at the odd numbered bit positions is odd.
+
+Example
+~~~~~~~
+
+.. code-block:: text
+
+    requestCode = 0x0237 = 0010 0011 0111
+    parityBit1 = 0010 0011 0111
+                   ^    ^^  ^^^ = 6 (even) -> 0
+    parityBit2 = 001000110111
+                  ^ ^ ^ ^ ^ ^ = 3 (odd) -> 1
+    finalRequestCode = 0110 0011 0111
+                       ^^
+
+Pseudocode
+~~~~~~~~~~
+
+.. code-block:: text
+
+    function (request) -> {
+        parity1 = 0;
+        tempData = request;
+        while (tempData != 0) {
+            parity1 = parity1 ^ (tempData & 1);
+            tempData = tempData >> 1;
+        }
+
+        parity2 = 0;
+        tempData = request;
+        for (int i = 0; i < 6; i++) {
+            parity2 = parity2 ^ (tempData & 1);
+            tempData = tempData >> 2;
+        }
+
+        return (((parity1 << 1) | parity2) << 14) | request;
+    }

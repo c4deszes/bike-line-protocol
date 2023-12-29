@@ -76,7 +76,7 @@ final system voltage which is going to be something in between *6.5V* and *12V*.
 .. jupyter-execute::
     :hide-code:
 
-    Latex(f'R_{{comp}} = {tps61085_ccomp * 10**9:.02f}nF')
+    Latex(f'C_{{comp}} = {tps61085_ccomp * 10**9:.02f}nF')
 
 .. jupyter-execute::
     :hide-code:
@@ -86,12 +86,12 @@ final system voltage which is going to be something in between *6.5V* and *12V*.
 .. jupyter-execute::
     :hide-code:
 
-    Latex(f'R_{{bot}} = {tps61085_rfb}')
+    Latex(f'R_{{bot1}} = {tps61085_rfb}')
 
 .. jupyter-execute::
     :hide-code:
 
-    Latex(f'R_{{bot}} = {tps61085_trim}')
+    Latex(f'R_{{trim}} = {tps61085_trim}')
 
 Sweeping over potentiometer's range it yields the following output voltages.
 

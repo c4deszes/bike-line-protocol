@@ -1,7 +1,12 @@
 import sys, os
 
+project = "line-protocol"
+copyright = "Balazs Eszes, 2023"
+author = "Balazs Eszes"
 version = '0.1'
+
 sys.path.append(os.path.abspath("./_ext"))
+sys.path.append(os.path.abspath("../python-lib"))
 
 extensions = [
     "sphinx_rtd_theme",
@@ -18,6 +23,9 @@ extensions = [
 
 autosectionlabel_prefix_document = True
 
+autoclass_content = "init"
+
+html_static_path = ['_static']
 html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "collapse_navigation" : False,

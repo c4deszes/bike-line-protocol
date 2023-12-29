@@ -61,8 +61,7 @@ Shutdown
 
 The request code ``0x0101`` is used to shutdown all peripherals. This mode is selected by the body
 computer when the ride ends by user request, the ignition switch is set to off or the battery is
-removed. A random integer byte is provided as payload, this code can be stored by the peripheral
-and later might be recalled.
+removed. No payload is provided.
 
 Internal states
 ---------------
@@ -77,9 +76,11 @@ everything is working as expected.
 
 The following states shall be reported back:
 
-* Ok: there's nothing wrong with the peripheral, all incoming and outgoing signals are valid
+* Operational: there's nothing wrong with the peripheral, all incoming and outgoing signals are valid
 * Warning: the device is experiencing some malfunction but the reported signals are valid
 * Error: the device is experiencing major or multiple malfunctions, the reported signals are unreliable
+* Boot error: the device is unable to run the application code
+* Bootloader: the device is in bootloader mode, awaiting further instructions
 
 Request code is ``0x020X``, the response length is 1 byte.
 
@@ -90,7 +91,7 @@ Request code is ``0x020X``, the response length is 1 byte.
         colwidth = 8;
         node_height = 36;
 
-        0-7: Status code (0x00 / 0x01);
+        0-7: Status code (0x00-0xFF);
     }
 
 Get power status
