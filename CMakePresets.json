@@ -42,7 +42,8 @@
         },
         {
             "name": "build-tests-gcc",
-            "configurePreset": "gcc-default"
+            "configurePreset": "gcc-default",
+            "inherits": "build-test-targets"
         }
     ],
     "testPresets": [
