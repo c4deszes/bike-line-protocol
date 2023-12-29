@@ -26,7 +26,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('network')
     parser.add_argument('--node', required=True)
-    parser.add_argument('--output', required=True)
+    parser.add_argument('--output', required=False, default=os.curdir)
     args = parser.parse_args()
 
     network = load_network(args.network)

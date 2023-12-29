@@ -66,7 +66,6 @@ class Request():
         self.id = id
         self.size = size
         self.signals = sorted(signals, key=lambda x: x.offset)
-
         _packed = Request.packer(self.signals, self.size)
 
         class RequestData(ctypes.LittleEndianStructure):
@@ -98,11 +97,19 @@ class Request():
                 raise ValueError(f'{signal.name} spans outside the frame!')
             if signal.offset != offset:
                 padding = signal.offset - offset
+                # TODO: type should depend on width
                 fields.append((f'Padding{paddings}', ctypes.c_uint16, padding))
                 paddings += 1
                 offset += padding
-            fields.append((signal.name, ctypes.c_uint16, signal.width))
+            if signal.width <= 8:
+                fields.append((signal.name, ctypes.c_uint8, signal.width))
+            elif signal.width <= 16:
+                fields.append((signal.name, ctypes.c_uint16, signal.width))
+            elif signal.width <= 32:
+                fields.append((signal.name, ctypes.c_uint32, signal.width))
             offset += signal.width
+        if size == 7:
+            print(fields)
         return fields
     
     def get_signal(self, name: str) -> Signal:
@@ -111,12 +118,13 @@ class Request():
                 return x
         raise KeyError()
 
-    def encode(self, signals: Dict[str, Union[str, int, float]]):
-        #self.data_class.from_param()
-        raise NotImplementedError()
+    # def encode(self, signals: Dict[str, Union[str, int, float]]):
+    #     #self.data_class.from_param()
+    #     raise NotImplementedError()
     
     def decode_raw(self, data) -> Dict[str, int]:
-        decoded = self.data_class(bytes(data))
+        # TODO: in some requests the length required is longer than the actual length
+        decoded = self.data_class(bytes(data + [0]))
         return decoded.fields
 
     def decode(self, data: Iterable[int]) -> Dict[str, Union[int, str, float]]:

@@ -1,28 +1,40 @@
-from typing import Literal, List, Union
-from .transport import LineSerialTransport
-from .constants import *
-from ..network import Network
+from typing import Literal, List, Union, TYPE_CHECKING
 from types import SimpleNamespace
 import logging
 import argparse
 import sys
 
+from .constants import *
+if TYPE_CHECKING:
+    from .transport import LineSerialTransport
+    from ..network import Network
+
 logger = logging.getLogger(__name__)
 
 class LineMaster():
 
-    def __init__(self, transport: LineSerialTransport) -> None:
+    def __init__(self, transport: 'LineSerialTransport', network: 'Network') -> None:
         self.transport = transport
-
-    def setup(self, network: Network):
         self.network = network
-        self.requests = SimpleNamespace()
+        self.requests = {}
+        for request in network.requests:
+            self.requests[request.name] = {}
+            for signal in request.signals:
+                # TODO: initial value support
+                self.requests[request.name][signal.name] = 0
 
-    def request_data(self, id: Union[int, str]):
-        data = self.transport.request_data(id)
+    def request_data(self, id: str):
+        request = self.network.get_request(id)
+        data = self.transport.request_data(request.id)
+        signals = request.decode(data)
 
-    # def send_data(self, id, data):
-    #     pass
+        strings = []
+        for (name, value) in signals.items():
+            self.requests[request.name][name] = value
+            strings.append(f"{name}={value}")
+        logger.debug('%s', ', '.join(strings))
+
+        # TODO: support for 
 
     def wakeup(self):
         """
