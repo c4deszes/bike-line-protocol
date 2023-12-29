@@ -7,9 +7,8 @@ logging.basicConfig(level=logging.DEBUG)
 with LineSerialTransport('COM4', baudrate=19200, one_wire=True) as transport:
     master = LineMaster(transport)
 
-    #master.wakeup()
-    #master.get_operation_status(0)
-
-    #master.transport._serial.write([0x55])
-    #master.transport.request_data(0x1006)
-    master.transport.send_data(0x1200, [0x00])
+    master.wakeup()
+    master.get_operation_status(0x1)
+    master.get_power_status(0x1)
+    master.get_serial_number(0x1)
+    master.get_software_version(0x1)

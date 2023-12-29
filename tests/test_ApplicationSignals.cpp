@@ -2,36 +2,25 @@
 #include "fff.h"
 
 extern "C" {
-    #include "line/application.h"
-    #include "line/diagnostics.h"
+    #include "line_protocol.h"
     #include "line_api.h"
 }
 
 DEFINE_FFF_GLOBALS;
 
-bool LINE_Diag_ListensTo(uint16_t request) {
-    if (request == LINE_DIAG_BROADCAST_ID_MIN) {
-        return true;
-    }
-    return false;
-}
-
-bool LINE_Diag_RespondsTo(uint16_t request) {
-    if (request == LINE_DIAG_UNICAST_ID_MIN) {
-        return true;
-    }
-    return false;
-}
-
-FAKE_VOID_FUNC3(LINE_Diag_OnRequest, uint16_t, uint8_t, uint8_t*);
-FAKE_VALUE_FUNC3(bool, LINE_Diag_PrepareResponse, uint16_t, uint8_t*, uint8_t*);
-
 class TestApplicationSignals : public testing::Test {
 protected:
     void SetUp() override {
-        RESET_FAKE(LINE_Diag_OnRequest);
+        
     }
 };
+
+FAKE_VALUE_FUNC0(uint8_t, LINE_Diag_GetOperationStatus);
+FAKE_VALUE_FUNC0(LINE_Diag_PowerStatus_t*, LINE_Diag_GetPowerStatus);
+FAKE_VALUE_FUNC0(uint32_t, LINE_Diag_GetSerialNumber);
+FAKE_VALUE_FUNC0(LINE_Diag_SoftwareVersion_t*, LINE_Diag_GetSoftwareVersion);
+
+FAKE_VOID_FUNC3(LINE_Transport_WriteResponse, uint8_t, uint8_t*, uint8_t);
 
 TEST_F(TestApplicationSignals, ListenToAlignedRequest) {
     uint8_t payload[] = {0x01, 0x02, 0x03, 0x04};

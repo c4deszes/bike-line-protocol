@@ -1,5 +1,6 @@
 {
     "name": "test-network",
+    "baudrate": 19200,
     "nodes": {
         "BodyComputer": {
             "address": "0x00",
@@ -59,5 +60,8 @@
                 "3": "NA"
             }
         }
+    },
+    "schedules": {
+        
     }
 }

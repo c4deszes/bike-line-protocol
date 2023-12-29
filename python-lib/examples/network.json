@@ -1,114 +1,61 @@
 {
     "name": "system-integration",
+    "baudrate": 19200,
     "nodes": {
-        "BodyComputer": {
+        "Master": {
             "address": "0x0",
-            "publishes": []
-        },
-        "RotorSensor": {
-            "address": "0x1",
-            "subscribes": [
-
-            ],
+            "subscribes": [],
             "publishes": [
-                "WheelSpeed"
+                "SwitchState"
+            ]
+        },
+        "Sensor": {
+            "address": "0x1",
+            "subscribes": [],
+            "publishes": [
+                "SensorState"
             ]
         }
     },
     "requests": {
-        "WheelSpeed": {
+        "SensorState": {
             "id": "0x1000",
-            "size": 5,
+            "size": 1,
             "layout": {
-                "FrontSpeed": {
+                "Temperature": {
                     "offset": 0,
-                    "width": 16,
-                    "encoder": ""
-                },
-                "RearSpeed": {
-                    "offset": 16,
-                    "width": 16,
-                    "encoder": ""
-                },
-                "FrontSpeedUnreliable": {
-
-                },
-                "RearSpeedUnreliable": {
-
-                },
-                "FrontWheelBrake": {
-
-                },
-                "RearWheelBrake": {
-
-                },
-                "FrontWheelLockup": {
-
-                },
-                "RearWheelLockup": {
-
-                },
-                "FrontWheelSlip": {
-
-                },
-                "RearWheelSlip": {
-
+                    "width": 8,
+                    "encoder": "TemperatureEncoder"
                 }
             }
         },
-        "RideStatus": {
-            "id": "0x1001",
-            "size": 4,
+        "SwitchState": {
+            "id": "0x1000",
+            "size": 1,
             "layout": {
-                "RideDistance": {
+                "Switch": {
                     "offset": 0,
-                    "width": 32
-                },
-                "iTPMS_State": {
-                    "offset": 33,
-                    "width": 2
+                    "width": 8,
+                    "encoder": "SwitchEncoder"
                 }
             }
-        },
-        "SensorStatus": {
-            "id": "0x1002",
-            "size": 1,
-            "layout": {
-                "FrontSensorStatus": {
-                    "offset": 0,
-                    "width": 4
-                }
-            }
-        },
-        "RideReset": {
-            "id": "0x1004",
-            "size": 1,
-            "layout": {
-                
-            }
-        },
-        "iTPMS_Reset": {
-            "id": "0x1005",
-            "size": 1,
-            "layout": {
-                
-            }
-        },
-        "SensorReset": {
-
         }
     },
     "encoders": {
-        "WheelSpeedEncoder": {
+        "TemperatureEncoder": {
             "type": "formula",
-            "formula": "value * 1000"
+            "scale": 1,
+            "offset": 40
         },
-        "FrontSpeedUnreliable": {
+        "SwitchEncoder": {
             "type": "mapping",
             "mapping": {
-                "0": "Valid",
-                "1": "Unreliable"
+                "0": "On",
+                "1": "Off"
             }
         }
+    },
+    "schedules": {
+        
     }
 }

@@ -35,23 +35,43 @@ bool LINE_Diag_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload
         return true;
     }
     else if (request == LINE_DIAG_UNICAST_ID(LINE_DIAG_REQUEST_POWER_STATUS, assignedAddress)) {
+        LINE_Diag_PowerStatus_t* status = LINE_Diag_GetPowerStatus();
+        *size = sizeof(LINE_Diag_PowerStatus_t);
+        payload[0] = status->U_status;
+        payload[1] = status->BOD_status;
+        payload[2] = status->I_operating;
+        payload[3] = status->I_sleep;
         return true;
     }
     else if (request == LINE_DIAG_UNICAST_ID(LINE_DIAG_REQUEST_SERIAL_NUMBER, assignedAddress)) {
+        uint32_t serial = LINE_Diag_GetSerialNumber();
+        *size = sizeof(uint32_t);
+        payload[0] = (uint8_t)(serial & 0xFF);
+        payload[1] = (uint8_t)((serial >> 8) & 0xFF);
+        payload[2] = (uint8_t)((serial >> 16) & 0xFF);
+        payload[3] = (uint8_t)((serial >> 24) & 0xFF);
         return true;
     }
     else if (request == LINE_DIAG_UNICAST_ID(LINE_DIAG_REQUEST_SW_NUMBER, assignedAddress)) {
+        LINE_Diag_SoftwareVersion_t* sw_number = LINE_Diag_GetSoftwareVersion();
+        *size = sizeof(LINE_Diag_SoftwareVersion_t);
+        payload[0] = sw_number->major;
+        payload[1] = sw_number->minor;
+        payload[2] = sw_number->patch;
+        payload[3] = sw_number->reserved;
         return true;
     }
     return false;
 }
 
 bool LINE_Diag_ListensTo(uint16_t request) {
+    if (request == LINE_DIAG_REQUEST_WAKEUP) {
+        return true;
+    }
     if (request > LINE_DIAG_BROADCAST_ID_MIN && request < LINE_DIAG_BROADCAST_ID_MAX) {
         return true;
     }
-    
-    if (request > LINE_DIAG_UNICAST_ID_MIN && request < LINE_DIAG_BROADCAST_ID_MAX) {
+    if (request > LINE_DIAG_UNICAST_ID_MIN && request < LINE_DIAG_UNICAST_ID_MAX) {
         return true;
     }
 

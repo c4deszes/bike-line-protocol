@@ -24,10 +24,10 @@ static uint8_t dataBuffer[255];
 static uint8_t outSize;
 static uint8_t outData[255];
 
-static uint8_t calculate_parity(uint16_t data) {
-    // TODO: should return the whole request code
+static uint16_t request_code(uint16_t data) {
     uint8_t parity1 = 0;
     uint16_t tempData = data;
+    // TODO: potentially wrong result if data goes outside of the 14bit range
     while (tempData != 0) {
         parity1 ^= (tempData & 1);
         tempData >>= 1;
@@ -40,7 +40,7 @@ static uint8_t calculate_parity(uint16_t data) {
         tempData >>= 2;
     }
 
-    return (parity1 << 1) | parity2;
+    return (((parity1 << 1) | parity2) << LINE_REQUEST_PARITY_POS) | data;
 }
 
 void LINE_Transport_Init(bool one_wire) {
@@ -55,18 +55,18 @@ void LINE_Transport_Update(uint8_t elapsed) {
 
     if (currentState == protocol_state_wait_request_msb ||
         currentState == protocol_state_wait_request_lsb) {
-        if (timestamp - lastReceived > LINE_HEADER_TIMEOUT) {
+        if (timestamp - lastReceived > LINE_REQUEST_TIMEOUT) {
             // TODO: error?
-            LINE_Transport_OnError(currentResponding, currentRequest, protocol_transport_error_timeout);
             currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_timeout);
         }
     }
     else if(currentState == protocol_state_wait_size ||
             currentSize == protocol_state_wait_data ||
             currentState == protocol_state_wait_data_checksum) {
         if (timestamp - lastReceived > LINE_DATA_TIMEOUT) {
-            LINE_Transport_OnError(currentResponding, currentRequest, protocol_transport_error_timeout);
             currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_timeout);
         }
     }
 }
@@ -83,27 +83,25 @@ void LINE_Transport_Receive(uint8_t data) {
         currentState = protocol_state_wait_request_lsb;
     }
     else if(currentState == protocol_state_wait_request_lsb) {
-        // TODO: verify parity bits, if failure then call handler
         currentRequest |= data;
 
-        //uint8_t calculatedParity = calculate_parity(currentRequest & LINE_REQUEST_PARITY_MASK);
-        //uint8_t actualParity = (currentRequest & ~(LINE_REQUEST_PARITY_MASK)) >> LINE_REQUEST_PARITY_POS;
-        //currentRequest = (currentRequest & (LINE_REQUEST_PARITY_MASK));
-
-        //if (actualParity == calculatedParity) {
+        uint16_t calculatedParity = request_code(currentRequest & LINE_REQUEST_PARITY_MASK);
+        if (currentRequest == calculatedParity) {
+            currentRequest = (currentRequest & (LINE_REQUEST_PARITY_MASK));
             currentResponding = LINE_Transport_RespondsTo(currentRequest);
 
             if (currentResponding) {
                 LINE_Transport_PrepareResponse(currentRequest, &outSize, outData);
-                uint8_t checksum = outSize;
+                uint8_t checksum = outSize + LINE_DATA_CHECKSUM_OFFSET;
                 for (int i = 0; i<outSize;i++) {
                     checksum += outData[i];
                 }
 
                 if (!isOneWire && currentResponding) {
                     // In Two-wire mode when responding
-                    LINE_Transport_WriteResponse(outSize, outData, checksum);
+                    // TODO: might have to change state only after response has been flushed
                     currentState = protocol_state_wait_sync;
+                    LINE_Transport_WriteResponse(outSize, outData, checksum);
                 }
                 else if(currentResponding) {
                     // In One-wire mode it receives the data sent out so the statemachine has to continue
@@ -114,16 +112,16 @@ void LINE_Transport_Receive(uint8_t data) {
             else {
                 currentState = protocol_state_wait_size;
             }
-        //}
-        //else {
-        //    LINE_Transport_OnError(false, currentRequest, protocol_transport_error_header_invalid);
-        //    currentState = protocol_state_wait_sync;
-        //}
+        }
+        else {
+            currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(false, currentRequest, line_transport_error_header_invalid);
+        }
     }
     else if(currentState == protocol_state_wait_size) {
         currentSize = data;
         currentSizeCounter = 0;
-        calculatedChecksum = data;
+        calculatedChecksum = data + LINE_DATA_CHECKSUM_OFFSET;
 
         if(currentSize == 0) {
             currentState = protocol_state_wait_data_checksum;
@@ -147,12 +145,20 @@ void LINE_Transport_Receive(uint8_t data) {
         // if check
         if (checksum == calculatedChecksum) {
             // TODO: call with null pointer if no data was sent
-            LINE_Transport_OnData(currentResponding, currentRequest, currentSize, dataBuffer);
             currentState = protocol_state_wait_sync;
+            LINE_Transport_OnData(currentResponding, currentRequest, currentSize, dataBuffer);
         }
         else {
-            LINE_Transport_OnError(currentResponding, currentRequest, protocol_transport_error_data_invalid);
             currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_data_invalid);
         }
     }
 }
+
+static void _no_handler(void) {
+    // Empty function for not implemented callbacks
+}
+
+void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) __attribute__((weak, alias("_no_handler")));
+
+void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_t* payload) __attribute__((weak, alias("_no_handler")));

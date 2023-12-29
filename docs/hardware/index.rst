@@ -3,4 +3,5 @@ Hardware design
 
 .. toctree::
 
-    device
+    master
+    design

@@ -10,30 +10,49 @@
             "name": "mingw-default",
             "generator": "MinGW Makefiles",
             "binaryDir": "${sourceDir}/_build/${presetName}",
-            "cacheVariables": {}
+            "cacheVariables": {
+                "LINE_PROTOCOL_BUILD_TESTS": "ON"
+            }
         },
         {
             "name": "gcc-default",
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/_build/${presetName}",
-            "cacheVariables": {}
+            "cacheVariables": {
+                "LINE_PROTOCOL_BUILD_TESTS": "ON"
+            }
         }
     ],
     "buildPresets": [
         {
-            "name": "build-gcc",
-            "configurePreset": "gcc-default",
+            "name": "build-test-targets",
+            "hidden": true,
             "targets": [
                 "test_TransportReceive",
                 "test_ApplicationInterface",
                 "test_ApplicationSignals"
             ]
+        },
+        {
+            "name": "build-docs-targets",
+            "hidden": true,
+            "targets": [
+                "docs"
+            ]
+        },
+        {
+            "name": "build-tests-gcc",
+            "configurePreset": "gcc-default",
+            "inherits": "build-test-targets"
         }
     ],
     "testPresets": [
         {
             "name": "test-gcc",
-            "configurePreset": "gcc-default"
+            "configurePreset": "gcc-default",
+            "output": {
+                "outputOnFailure": true
+            }
         }
     ]
 }

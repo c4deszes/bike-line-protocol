@@ -11,16 +11,17 @@ extern "C"
 
 #define LINE_SYNC_BYTE 0x55
 #define LINE_REQUEST_PARITY_MASK 0x3FFF
-#define LINE_REQUEST_PARITY_POS 13
+#define LINE_REQUEST_PARITY_POS 14
+#define LINE_DATA_CHECKSUM_OFFSET 0xA3
 
-#define LINE_HEADER_TIMEOUT 1
+#define LINE_REQUEST_TIMEOUT 5
 #define LINE_DATA_TIMEOUT 5
 
 typedef enum {
-    protocol_transport_error_timeout,
-    protocol_transport_error_header_invalid,
-    protocol_transport_error_data_invalid
-} protocol_transport_error;
+    line_transport_error_timeout,
+    line_transport_error_header_invalid,
+    line_transport_error_data_invalid
+} line_transport_error;
 
 /**
  * @brief Initializes the transport layer
@@ -50,32 +51,42 @@ void LINE_Transport_Receive(uint8_t data);
 void LINE_Transport_Update(uint8_t elapsed);
 
 /**
- * @brief Called when a valid request ID is received, the consumer should then decide whether it
+ * @brief Called when a valid request code is received, the consumer should then decide whether it
  * should respond
  * 
- * @param request 
+ * @param request Request code
  * @return true if the consumer is responding to this request
  * @return false if the consumer is listening to this request
  */
 bool LINE_Transport_RespondsTo(uint16_t request);
 
 /**
- * @brief 
+ * @brief Called when a request is received and the peripheral is responding to, the function
+ * should then prepare the payload contents for the given request
  * 
- * @param request 
- * @param size 
- * @param payload 
+ * @param request Request code
+ * @param size Payload size
+ * @param payload Payload
+ * @return true When the response was successfully prepared
+ * @return false Otherwise
  */
-void LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
+bool LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
 
+/**
+ * @brief Writes the response to the physical layer
+ * 
+ * @param size Payload size
+ * @param payload Payload
+ * @param checksum Checksum value
+ */
 void LINE_Transport_WriteResponse(uint8_t size, uint8_t* payload, uint8_t checksum);
 
 /**
  * @brief Called when the data body is received, the consumer should then decide how it should
  *        interpret the data
  * 
- * @param response true if this data was sent by the consumer
- * @param request Request identifier
+ * @param response Whether the peripheral is the one responding to this request
+ * @param request Request code
  * @param size Data size
  * @param payload Data pointer
  */
@@ -87,11 +98,11 @@ void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_
  * - Request header parity is invalid
  * - Data checksum is invalid
  * 
- * @param response Whether the 
- * @param request Request identifier
+ * @param response Whether the peripheral is the one responding to this request
+ * @param request Request code
  * @param error_type Error code
  */
-void LINE_Transport_OnError(bool response, uint16_t request, protocol_transport_error error_type);
+void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type);
 
 #ifdef __cplusplus
 }

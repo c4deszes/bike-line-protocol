@@ -1,5 +1,6 @@
 {
     "name": "test-network",
+    "baudrate": 19200,
     "nodes": {
         "Main": {
             "address": "0x0",
@@ -109,5 +110,8 @@
     },
     "encoders": {
 
+    },
+    "schedules": {
+        
     }
 }

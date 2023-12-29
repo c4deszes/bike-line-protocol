@@ -12,7 +12,7 @@ class TestNetworkLoad:
 
         node = network.get_node('BodyComputer')
         assert node.address == 0x00
-        assert node.subcribes[0] == network.get_request('WheelSpeed')
+        assert node.subscribes[0] == network.get_request('WheelSpeed')
 
         node = network.get_node('RotorSensor')
         assert node.address == 0x01

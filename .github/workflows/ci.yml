@@ -13,14 +13,20 @@ jobs:
         with:
           submodules: 'true'
 
+      - name: Setup Python library
+        working-directory: python-lib
+        run: python -m pip install -e .[dev]
+
       - name: Configure
         run: cmake --preset gcc-default
       
       - name: Build
-        run: cmake --build --preset 
+        run: cmake --build --preset build-tests-gcc
       
       - name: Run tests
         run: ctest --preset test-gcc
+      
+      # TODO: coverage
 
   example_arduino:
     name: Example (Arduino)
@@ -38,11 +44,12 @@ jobs:
           arduino-cli core install arduino:samd
 
       - name: Setup Python library
-        run: python -m pip install -e python-lib
+        working-directory: python-lib
+        run: python -m pip install -e .[dev]
 
       - name: Generate code
         working-directory: examples/arduino
-        run: python -m line_protocol.codegen --network
+        run: python -m line_protocol.codegen network.json --node Arduino --output .
 
       - name: Build sketch
         working-directory: examples/arduino
@@ -58,7 +65,7 @@ jobs:
 
       - name: Setup Python library
         working-directory: python-lib
-        run: python -m pip install -e .
+        run: python -m pip install -e .[dev]
       
       - name: Run tests
         working-directory: python-lib

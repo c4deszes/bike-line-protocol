@@ -4,6 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 setup(
     name='line-protocol',
+    version='0.1.0',
     author="Balazs Eszes",
     author_email="c4deszes@gmail.com",
     description="Simple protocol for serial communication devices",
@@ -36,7 +37,10 @@ setup(
     },
     python_requires='!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4',
     entry_points={
-        'console_scripts': ['line-codegen=line_protocol.codegen.generator:main']
+        'console_scripts': [
+            'line-codegen=line_protocol.codegen.generator:main',
+            'line-monitor=line_protocol.protocol.cli:main'
+        ]
     },
     classifiers=[
         "Programming Language :: Python :: 3.6",

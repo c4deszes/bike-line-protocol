@@ -2,8 +2,8 @@
 #include "fff.h"
 
 extern "C" {
-    #include "line/application.h"
-    #include "line/diagnostics.h"
+    #include "line_application.h"
+    #include "line_diagnostics.h"
 }
 
 DEFINE_FFF_GLOBALS;
@@ -42,7 +42,7 @@ FAKE_VOID_FUNC3(LINE_API_OnRequest, uint16_t, uint8_t, uint8_t*);
 FAKE_VALUE_FUNC3(bool, LINE_Diag_PrepareResponse, uint16_t, uint8_t*, uint8_t*);
 FAKE_VALUE_FUNC3(bool, LINE_API_PrepareResponse, uint16_t, uint8_t*, uint8_t*);
 
-class TestTransportLayerReceive : public testing::Test {
+class TestApplicationSignals : public testing::Test {
 protected:
     void SetUp() override {
         RESET_FAKE(LINE_Diag_OnRequest);
@@ -50,7 +50,7 @@ protected:
     }
 };
 
-TEST_F(TestTransportLayerReceive, HandleDiagnosticRequest) {
+TEST_F(TestApplicationSignals, HandleDiagnosticRequest) {
     uint8_t payload[] = {0};
     LINE_App_OnRequest(LINE_DIAG_BROADCAST_ID_MIN, 1, payload);
 
@@ -58,7 +58,7 @@ TEST_F(TestTransportLayerReceive, HandleDiagnosticRequest) {
     EXPECT_EQ(LINE_API_OnRequest_fake.call_count, 0);
 }
 
-TEST_F(TestTransportLayerReceive, HandleApplicationRequest) {
+TEST_F(TestApplicationSignals, HandleApplicationRequest) {
     uint8_t payload[] = {0};
     LINE_App_OnRequest(0x2000, 1, payload);
 
