@@ -21,10 +21,12 @@ jobs:
         run: cmake --preset gcc-default
       
       - name: Build
-        run: cmake --build --preset build-gcc
+        run: cmake --build --preset build-tests-gcc
       
       - name: Run tests
         run: ctest --preset test-gcc
+      
+      # TODO: coverage
 
   example_arduino:
     name: Example (Arduino)

@@ -24,7 +24,7 @@ protected:
 
 TEST_F(TestTransportLayerReceive, NotRespondingNoData) {
     LINE_Transport_RespondsTo_fake.return_val = false;
-    uint8_t data[] = {0x55, 0x00, 0x00, 0x00, 0x00};
+    uint8_t data[] = {0x55, 0x00, 0x00, 0x00, 0xA3};
     LINE_Transport_Init(false);
 
     for (int i = 0; i < sizeof(data); i++) {
@@ -44,7 +44,7 @@ TEST_F(TestTransportLayerReceive, NotRespondingNoData) {
 
 TEST_F(TestTransportLayerReceive, NotRespondingWithData) {
     LINE_Transport_RespondsTo_fake.return_val = false;
-    uint8_t data[] = {0x55, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04};
+    uint8_t data[] = {0x55, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0xA7};
     LINE_Transport_Init(false);
 
     for (int i = 0; i < sizeof(data); i++) {

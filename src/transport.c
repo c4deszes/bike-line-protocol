@@ -25,9 +25,9 @@ static uint8_t outSize;
 static uint8_t outData[255];
 
 static uint16_t request_code(uint16_t data) {
-    // TODO: should return the whole request code
     uint8_t parity1 = 0;
     uint16_t tempData = data;
+    // TODO: potentially wrong result if data goes outside of the 14bit range
     while (tempData != 0) {
         parity1 ^= (tempData & 1);
         tempData >>= 1;

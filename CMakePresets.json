@@ -25,13 +25,24 @@
     ],
     "buildPresets": [
         {
-            "name": "build-gcc",
-            "configurePreset": "gcc-default",
+            "name": "build-test-targets",
+            "hidden": true,
             "targets": [
                 "test_TransportReceive",
                 "test_ApplicationInterface",
                 "test_ApplicationSignals"
             ]
+        },
+        {
+            "name": "build-docs-targets",
+            "hidden": true,
+            "targets": [
+                "docs"
+            ]
+        },
+        {
+            "name": "build-tests-gcc",
+            "configurePreset": "gcc-default"
         }
     ],
     "testPresets": [

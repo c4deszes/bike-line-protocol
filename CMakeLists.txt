@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
-project(line-protocol LANGUAGES C CXX)
-
-# Determine if building repository or t
-# set(LINE_PROT_STANDALONE_PROJECT OFF)
-# if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-#     set(LINE_PROT_STANDALONE_PROJECT ON)
-# endif()
+project(
+    line-protocol
+    VERSION "0.1.0"
+    LANGUAGES C CXX)
 
 option(LINE_PROTOCOL_BUILD_TESTS "Enables library test cases" OFF)
 
@@ -26,11 +23,6 @@ add_library(line-protocol-adapter-sources INTERFACE)
 target_sources(line-protocol-adapter-sources INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app_adapter.c
 )
-
-# TODO: is this target needed?
-# add_library(line-protocol-lib STATIC EXCLUDE_FROM_ALL)
-# target_link_libraries(line-protocol-lib PRIVATE line-protocol-sources)
-# target_link_libraries(line-protocol-lib PUBLIC line-protocol-api)
 
 function(line_codegen)
 

@@ -23,10 +23,10 @@ line_codegen(
     TARGET test_network
     NETWORK test_network.json
     NODE Peripheral_1
+    ADAPTER
 )
 add_executable(test_ApplicationSignals EXCLUDE_FROM_ALL)
 target_sources(test_ApplicationSignals PRIVATE
-    ../src/application.c
     test_ApplicationSignals.cpp
 )
 add_test(test_ApplicationSignals)
