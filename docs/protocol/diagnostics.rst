@@ -22,7 +22,7 @@ Request codes
 Broadcast requests address all peripherals, the data is provided by the master.
 
 Unicast requests address a specific peripheral, the lowest nibble is used as the address.
-``0`` and ``0xF`` are reserved, therefore 14 devices supporting unicast requests can be on the
+``0x0`` and ``0xF`` are reserved, therefore 14 devices supporting unicast requests can be on the
 same network.
 
 Lifecycle operations
@@ -76,11 +76,36 @@ everything is working as expected.
 
 The following states shall be reported back:
 
-* Operational: there's nothing wrong with the peripheral, all incoming and outgoing signals are valid
-* Warning: the device is experiencing some malfunction but the reported signals are valid
-* Error: the device is experiencing major or multiple malfunctions, the reported signals are unreliable
-* Boot error: the device is unable to run the application code
-* Bootloader: the device is in bootloader mode, awaiting further instructions
+.. list-table::
+    :header-rows: 1
+
+    * - Name
+      - Code
+      - Description
+
+    * - Initializing
+      - 0x00
+      - The device is stil setting itself up
+
+    * - Operational
+      - 0x01
+      - The device is fully functional
+
+    * - Warning
+      - 0x02
+      - When experiencing some malfunction but the reported signals are valid
+
+    * - Error
+      - 0x03
+      - When experiencing major or multiple malfunctions
+
+    * - Bootloader
+      - 0x40
+      - When in bootloader mode, awaiting further instructions
+
+    * - Boot error
+      - 0x41
+      - The device is unable to run the application code
 
 Request code is ``0x020X``, the response length is 1 byte.
 
@@ -118,7 +143,7 @@ Each current rating is provided as 1 byte in 25mA/inc scaling.
 The sleep current is encoded differently as they are mostly sub-milliampere values, the scaling is
 10uA/inc.
 
-* 130 means 1.3mA is the peripheral's sleep current (which is quite high)
+* 130 means 1.3mA is the peripheral's sleep current, which is quite high
 
 Request code is ``0x021X``, the response length is 4 bytes.
 

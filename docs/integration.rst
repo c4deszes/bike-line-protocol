@@ -54,7 +54,7 @@ one-wire nature of the physical layer.
         if (response) {
             return;
         }
-        
+
         if (request == 0x0FFF) {
             // Call diagnostic function
         }
@@ -72,7 +72,7 @@ used to generate C code for the application layer.
     find_package(Python REQUIRED)
 
     include(tools/cmake/CPM.cmake)
-    CPMAddPackage("gh:c4deszes/bike-line-protocol#feature/first-version")
+    CPMAddPackage("gh:c4deszes/bike-line-protocol#master")
 
     # This function creates the codegen target and an interface library
     # which includes all sources and includes
@@ -83,7 +83,7 @@ used to generate C code for the application layer.
         ADAPTER                         # When added it includes default adapters between
                                         # the application and transport layer
     )
-    
+
     # You can then create a real target which inherits the interface's properties
     # The microcontroller specific compiler flags can be added to this target later
     add_library(protocol-stack STATIC)
