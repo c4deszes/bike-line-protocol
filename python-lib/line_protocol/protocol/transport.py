@@ -19,18 +19,30 @@ class LineTransportRequestError(LineTransportError):
 class LineTransportDataError(LineTransportError):
     pass
 
+class TransportListener():
+
+    def on_request(self, timestamp, request: int, size: int, data: List[int], checksum: int):
+        raise NotImplementedError()
+
+    def on_error(self, timestamp, request: int, error_type: str):
+        raise NotImplementedError()
+
 class LineSerialTransport():
 
     def __init__(self, port: str, baudrate: int = 19200, one_wire: bool = True) -> None:
         self.port = port
         self.baudrate = baudrate
         self.one_wire = one_wire
+        self.listener = None
         self._serial = serial.Serial(None, self.baudrate, timeout=0.001)
 
     def __enter__(self) -> 'LineSerialTransport':
         self._serial.port = self.port
         self._serial.open()
         return self
+    
+    def add_listener(self, listener: TransportListener):
+        self.listener = listener
 
     def request_data(self, request: int) -> List[int]:
         header = create_header(request)
@@ -51,6 +63,8 @@ class LineSerialTransport():
 
         if size is None:
             logger.error('RX Timeout!')
+            if self.listener:
+                self.listener.on_error(start, request, 'timeout')
             raise LineTransportTimeout()
         
         data = []
@@ -62,6 +76,8 @@ class LineSerialTransport():
 
         if len(data) != size:
             logger.error('RX Timeout! LEN=%d DATA=%s', size, data)
+            if self.listener:
+                self.listener.on_error(start, request, 'incomplete-response')
             raise LineTransportTimeout()
         
         checksum = None
@@ -75,13 +91,20 @@ class LineSerialTransport():
         if checksum is None:
             logger.debug("RX LEN=%d DATA=%s", size, data)
             logger.error('RX Timeout! No checksum received.')
+            if self.listener:
+                self.listener.on_error(start, request, 'incomplete-response')
             raise LineTransportTimeout()
 
         logger.debug("RX LEN=%d DATA=%s CHK=%02X", size, data, checksum)
 
         if data_checksum(data) != checksum:
             logger.error('RX Checksum error!')
+            if self.listener:
+                self.listener.on_error(start, request, 'checksum error')
             raise LineTransportDataError('Invalid checksum.')
+        
+        if self.listener:
+            self.listener.on_request(start, request, size, data, checksum)
 
         return data
 
@@ -95,6 +118,9 @@ class LineSerialTransport():
         # TODO: only read in one wire mode
         if self.one_wire:
             self._serial.read(len(frame))
+
+        if self.listener:
+            self.listener.on_request(time.time(), request, len(data), data, checksum)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._serial.close()

@@ -6,10 +6,11 @@ import sys
 import time
 
 from .transport import LineSerialTransport
+from ..monitor.traffic import TrafficLogger
 from .master import LineMaster
 from .constants import *
 from ..network import load_network
-from ..plot.config import MonitoringConfig, load_config
+from ..monitor.config import MonitoringConfig, load_config
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
@@ -24,13 +25,21 @@ def main():
 
     if args.master:
         with LineSerialTransport(args.port, baudrate=config.network.baudrate, one_wire=True) as transport:
+            traffic_logger = TrafficLogger()
+            transport.add_listener(traffic_logger)
+
             master = LineMaster(transport, config.network)
 
-            for schedule in config.preStartSchedules:
-                schedule.perform(master)
+            try:
+                for schedule in config.preStartSchedules:
+                    schedule.perform(master)
 
-            while True:
-                config.mainSchedule.perform(master)
+                while True:
+                    config.mainSchedule.perform(master)
+            except KeyboardInterrupt:
+                pass
+
+            traffic_logger.dump_json('log.txt')
     else:
         # TODO: implement listener
         pass

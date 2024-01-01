@@ -11,7 +11,7 @@ class SignalRef:
     request: Request
     signal: Signal
 
-class Plot:
+class PlotConfig:
     name: str
     signals: List[SignalRef]
 
@@ -20,7 +20,16 @@ class MonitoringConfig:
     customSchedules: List[Schedule]
     preStartSchedules: List[Schedule]
     mainSchedule: Schedule
-    plots: List[Plot]
+    plots: List[PlotConfig]
+    # TODO: duration attribute
+
+def to_signal_ref(network: Network, ref: str) -> SignalRef:
+    ref = ref.split('.')
+    output = SignalRef()
+    output.request = network.get_request(ref[0])
+    output.signal = output.request.get_signal(ref[1])
+
+    return output
 
 def load_config(path: str) -> MonitoringConfig:
     with open(path, 'r') as f:
@@ -34,5 +43,17 @@ def load_config(path: str) -> MonitoringConfig:
 
     config.preStartSchedules = [network.get_schedule(y) for y in data['prestartSchedules']]
     config.mainSchedule = network.get_schedule(data['mainSchedule'])
+    # TODO: load duration attribute
+
+    config.plots = []
+    for (name, settings) in data['plots'].items():
+        plot = PlotConfig()
+        plot.name = name
+        plot.signals = []
+        # TODO: do not allow empty plots
+        for sig in settings['signals']:
+            # TODO: do not allow plots with signals using different encoders
+            ref = to_signal_ref(network, sig)
+            plot.signals.append(to_signal_ref(network, sig))
 
     return config
