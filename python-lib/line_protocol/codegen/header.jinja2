@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define LINE_NETWORK_{{network.name}}_BAUDRATE {{network.baudrate}}
+
 {% for node in network.nodes %}
 #define LINE_NODE_{{node.name}}_DIAG_ADDRESS 0x{{'%01X' % node.address}}
 {% endfor %}

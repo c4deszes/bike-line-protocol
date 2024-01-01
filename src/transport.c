@@ -155,10 +155,14 @@ void LINE_Transport_Receive(uint8_t data) {
     }
 }
 
-static void _no_handler(void) {
+static void _no_handler1(bool response, uint16_t request, line_transport_error error_type) {
     // Empty function for not implemented callbacks
 }
 
-void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) __attribute__((weak, alias("_no_handler")));
+void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) __attribute__((weak, alias("_no_handler1")));
 
-void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_t* payload) __attribute__((weak, alias("_no_handler")));
+static void _no_handler2(bool response, uint16_t request, uint8_t size, uint8_t* payload) {
+    // Empty function for not implemented callbacks
+}
+
+void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_t* payload) __attribute__((weak, alias("_no_handler2")));

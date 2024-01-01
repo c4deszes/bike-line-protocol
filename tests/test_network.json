@@ -1,5 +1,5 @@
 {
-    "name": "test-network",
+    "name": "TestNetwork",
     "baudrate": 19200,
     "nodes": {
         "Main": {
