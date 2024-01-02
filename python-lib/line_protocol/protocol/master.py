@@ -65,6 +65,9 @@ class LineMaster():
         if len(response) != 1:
             logger.error('Unexpected response to op. status request! %s', response)
             raise ValueError('Unexpected response.')
+        status = 'INVALID'
+        if response[0] == LINE_DIAG_OP_STATUS_INIT:
+            status = 'init'
         if response[0] == LINE_DIAG_OP_STATUS_OK:
             status = 'ok'
         elif response[0] == LINE_DIAG_OP_STATUS_WARN:

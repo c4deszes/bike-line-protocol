@@ -8,15 +8,19 @@ from .constants import LINE_REQUEST_TIMEOUT, LINE_DATA_TIMEOUT
 logger = logging.getLogger(__name__)
 
 class LineTransportError(Exception):
+    "Common exception type for transport errors"
     pass
 
 class LineTransportTimeout(LineTransportError):
+    """Raised when no response is received"""
     pass
 
 class LineTransportRequestError(LineTransportError):
+    """Raised when the request code parity is wrong"""
     pass
 
 class LineTransportDataError(LineTransportError):
+    """Raised when the data section of the response is invalid"""
     pass
 
 class TransportListener():

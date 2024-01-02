@@ -5,12 +5,12 @@ import argparse
 import sys
 import time
 
-from .transport import LineSerialTransport
-from ..monitor.traffic import TrafficLogger
-from .master import LineMaster
-from .constants import *
+from ..protocol.transport import LineSerialTransport
+from .traffic import TrafficLogger
+from ..protocol.master import LineMaster
+from ..protocol.constants import *
 from ..network import load_network
-from ..monitor.config import MonitoringConfig, load_config
+from .config import MonitoringConfig, load_config
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
