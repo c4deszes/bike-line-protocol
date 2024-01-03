@@ -26,9 +26,11 @@ class LineTransportDataError(LineTransportError):
 class TransportListener():
 
     def on_request(self, timestamp, request: int, size: int, data: List[int], checksum: int):
+        """Called when a complete request is received"""
         raise NotImplementedError()
 
     def on_error(self, timestamp, request: int, error_type: str):
+        """Called when an error occurs on the bus"""
         raise NotImplementedError()
 
 class LineSerialTransport():
@@ -54,8 +56,12 @@ class LineSerialTransport():
         logger.debug("TX REQ 0x%04X", request)
 
         if self.one_wire:
-            time.sleep(0.5)     # TODO: adjust duration
-            self._serial.read(len(header))
+            received = 0
+            # TODO: timeout to prevent infinite loop
+            while received < len(header):
+                data = self._serial.read(1)
+                if len(data) == 1:
+                    received += 1
 
         start = time.time()
         size = None
@@ -119,7 +125,7 @@ class LineSerialTransport():
         logger.debug("TX REQ 0x%04X LEN=%d DATA=%s CHK=%s", request, len(data), data, 'ok' if checksum is None else hex(checksum))
         
         time.sleep(0.1)
-        # TODO: only read in one wire mode
+
         if self.one_wire:
             self._serial.read(len(frame))
 

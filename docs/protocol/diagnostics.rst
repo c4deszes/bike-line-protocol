@@ -63,6 +63,29 @@ The request code ``0x0101`` is used to shutdown all peripherals. This mode is se
 computer when the ride ends by user request, the ignition switch is set to off or the battery is
 removed. No payload is provided.
 
+Addressing
+----------
+
+Each peripheral on a network stores it's diagnostic address, the address initially is unassigned
+applications can then change it to whatever they have stored.
+
+Conditional change address
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The request code ``0x060F`` is used to setup nodes that don't yet have a diagnostic address. The
+request data starts with a serial number followed by the new address.
+
+.. kroki::
+    :type: packetdiag
+
+    packetdiag {
+        colwidth = 8;
+        node_height = 36;
+
+        0-31: Serial number;
+        32-39: New diagnostic address;
+    }
+
 Internal states
 ---------------
 

@@ -27,7 +27,15 @@ typedef union {
         {% if signal.offset > position.value -%}
         unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
         {% endif %}
-        unsigned int {{signal.name}} : {{signal.width}};
+
+        {% if signal.width <= 8 %}
+        uint8_t {{signal.name}} : {{signal.width}};
+        {% elif signal.width <= 16 %}
+        uint16_t {{signal.name}} : {{signal.width}};
+        {% elif signal.width <= 32 %}
+        uint32_t {{signal.name}} : {{signal.width}};
+        {% endif %}
+
         {%- set position.value = position.value + signal.width -%}
     {%- endfor %}
     {%- if position.value < request.size * 8 %}
@@ -66,7 +74,15 @@ typedef union {
         {% if signal.offset > position.value -%}
         unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
         {% endif %}
-        unsigned int {{signal.name}} : {{signal.width}};
+        
+        {% if signal.width <= 8 %}
+        uint8_t {{signal.name}} : {{signal.width}};
+        {% elif signal.width <= 16 %}
+        uint16_t {{signal.name}} : {{signal.width}};
+        {% elif signal.width <= 32 %}
+        uint32_t {{signal.name}} : {{signal.width}};
+        {% endif %}
+
         {%- set position.value = position.value + signal.width -%}
     {%- endfor %}
     {%- if position.value < request.size * 8 %}

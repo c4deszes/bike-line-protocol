@@ -15,6 +15,7 @@ extern "C"
 #define LINE_DIAG_UNICAST_ID_MAX   0x0FFF
 #define LINE_DIAG_UNICAST_ID(request, id) (request | id)
 #define LINE_DIAG_UNICAST_UNASSIGNED_ID 0x0
+#define LINE_DIAG_UNICAST_BROADCAST_ID 0xF
 
 // Broadcast frames
 #define LINE_DIAG_REQUEST_WAKEUP 0x0000

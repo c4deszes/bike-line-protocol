@@ -1,15 +1,20 @@
 from typing import List
 import json
 import os
+from dataclasses import dataclass
 
 from ..network import Network, Signal, Request
 from ..network.schedule import Schedule
 from ..network import load_network
 from ..network.loader import load_schedules
 
+@dataclass(frozen=True)
 class SignalRef:
     request: Request
     signal: Signal
+
+    def __str__(self) -> str:
+        return f"{self.request.name}.{self.signal.name}"
 
 class PlotConfig:
     name: str
@@ -25,9 +30,8 @@ class MonitoringConfig:
 
 def to_signal_ref(network: Network, ref: str) -> SignalRef:
     ref = ref.split('.')
-    output = SignalRef()
-    output.request = network.get_request(ref[0])
-    output.signal = output.request.get_signal(ref[1])
+    request = network.get_request(ref[0])
+    output = SignalRef(request, request.get_signal(ref[1]))
 
     return output
 
@@ -54,6 +58,6 @@ def load_config(path: str) -> MonitoringConfig:
         for sig in settings['signals']:
             # TODO: do not allow plots with signals using different encoders
             ref = to_signal_ref(network, sig)
-            plot.signals.append(to_signal_ref(network, sig))
+            plot.signals.append(ref)
 
     return config

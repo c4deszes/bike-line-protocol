@@ -52,7 +52,7 @@ class MappingEncoder(SignalEncoder):
     def decode(self, value: int) -> str:
         return self.mapping[value]
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class Signal():
     name: str
     offset: int

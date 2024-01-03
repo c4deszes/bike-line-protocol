@@ -11,6 +11,7 @@ from ..protocol.master import LineMaster
 from ..protocol.constants import *
 from ..network import load_network
 from .config import MonitoringConfig, load_config
+from .measurement import Measurement
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
@@ -19,6 +20,8 @@ def main():
     parser.add_argument('config')
     parser.add_argument('--port', required=True)
     parser.add_argument('--master', action='store_true', default=False)
+    parser.add_argument('--dump-traffic')
+    parser.add_argument('--dump-signals')
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -28,7 +31,10 @@ def main():
             traffic_logger = TrafficLogger()
             transport.add_listener(traffic_logger)
 
+            measurement = Measurement()
+
             master = LineMaster(transport, config.network)
+            master.add_listener(measurement)
 
             try:
                 for schedule in config.preStartSchedules:
@@ -39,7 +45,11 @@ def main():
             except KeyboardInterrupt:
                 pass
 
-            traffic_logger.dump_json('log.txt')
+            if args.dump_traffic:
+                traffic_logger.dump_json(args.dump_traffic)
+
+            if args.dump_signals:
+                measurement.dump_csv(args.dump_signals)
     else:
         # TODO: implement listener
         pass

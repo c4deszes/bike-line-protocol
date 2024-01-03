@@ -3,11 +3,14 @@ from types import SimpleNamespace
 import logging
 import argparse
 import sys
+import time
 
 from .constants import *
+from ..monitor.config import SignalRef
 if TYPE_CHECKING:
     from .transport import LineSerialTransport
     from ..network import Network
+    from ..monitor.measurement import SignalListener
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +19,7 @@ class LineMaster():
     def __init__(self, transport: 'LineSerialTransport', network: 'Network') -> None:
         self.transport = transport
         self.network = network
+        self.listener = None
         self.requests = {}
         for request in network.requests:
             self.requests[request.name] = {}
@@ -23,10 +27,18 @@ class LineMaster():
                 # TODO: initial value support
                 self.requests[request.name][signal.name] = 0
 
+    def add_listener(self, listener: 'SignalListener'):
+        self.listener = listener
+
     def request_data(self, id: str):
         request = self.network.get_request(id)
         data = self.transport.request_data(request.id)
         signals = request.decode(data)
+
+        if self.listener:
+            current_time = time.time()
+            for (name, value) in signals.items():
+                self.listener.on_signal(current_time, SignalRef(request, request.get_signal(name)), value)
 
         strings = []
         for (name, value) in signals.items():
