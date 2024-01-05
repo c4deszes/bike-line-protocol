@@ -59,5 +59,6 @@ def load_config(path: str) -> MonitoringConfig:
             # TODO: do not allow plots with signals using different encoders
             ref = to_signal_ref(network, sig)
             plot.signals.append(ref)
+        config.plots.append(plot)
 
     return config

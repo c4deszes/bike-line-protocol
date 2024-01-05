@@ -12,6 +12,9 @@ class DataPoint:
 class TimeSeries:
     data: List[DataPoint]
 
+    def get_range(start: float, stop: float) -> List[DataPoint]:
+        pass
+
 class SignalListener:
 
     def on_signal(self, timestamp: float, ref: SignalRef, value):

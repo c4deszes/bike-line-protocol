@@ -22,7 +22,8 @@ class TrafficRecord(TrafficBaseRecord):
     checksum: int
 
     def __str__(self) -> str:
-        return binascii.hexlify(self.data)
+        # TODO: limit to length 20 bytes
+        return ' '.join(format(i, '02X') for i in self.data)
 
 @dataclass_json
 @dataclass
