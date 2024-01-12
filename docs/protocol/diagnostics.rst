@@ -72,8 +72,11 @@ applications can then change it to whatever they have stored.
 Conditional change address
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The request code ``0x060F`` is used to setup nodes that don't yet have a diagnostic address. The
+The request code ``0x01E0`` is used to setup nodes that don't yet have a diagnostic address. The
 request data starts with a serial number followed by the new address.
+
+Nodes that already use the address but don't match in serial number must unassign their address to
+avoid conflicts.
 
 .. kroki::
     :type: packetdiag

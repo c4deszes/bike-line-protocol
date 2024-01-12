@@ -21,6 +21,7 @@ extern "C"
 #define LINE_DIAG_REQUEST_WAKEUP 0x0000
 #define LINE_DIAG_REQUEST_SLEEP  0x0100
 #define LINE_DIAG_REQUEST_SHUTDOWN 0x0101
+#define LINE_DIAG_REQUEST_CONDITIONAL_CHANGE_ADDRESS 0x01E0
 
 // Unicast frames (mandatory)
 #define LINE_DIAG_REQUEST_OP_STATUS 0x0200
@@ -67,6 +68,10 @@ typedef struct {
  * @param diag_address Diagnostic address
  */
 void LINE_Diag_Init(uint8_t diag_address);
+
+void LINE_Diag_RegisterUnicastListener(uint16_t request, void* callback);
+
+void LINE_Diag_RegisterUnicastPublisher(uint16_t request, void* callback);
 
 /**
  * @brief Returns whether the peripheral is responding to the diagnostic (unicast) request
@@ -127,6 +132,14 @@ void LINE_Diag_OnSleep(void);
  * @note No implementation is required, default implementation is empty
  */
 void LINE_Diag_OnShutdown(void);
+
+/**
+ * @brief Called when conditional change address request has been received
+ * 
+ * @note This is called after the address has already been changed, no implementation required
+ *       unless the peripheral wants to save it's address in EEPROM
+ */
+void LINE_Diag_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address);
 
 /**
  * @brief Returns the current operational status code (ok, warn, error)
