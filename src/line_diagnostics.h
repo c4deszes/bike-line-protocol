@@ -72,9 +72,9 @@ void LINE_Diag_Init();
 
 void LINE_Diag_SetAddress(uint8_t diag_address);
 
-void LINE_Diag_RegisterUnicastListener(uint16_t request, LINE_Diag_PublisherCallback_t callback);
+void LINE_Diag_RegisterUnicastListener(uint16_t request, LINE_Diag_ListenerCallback_t callback);
 
-void LINE_Diag_RegisterUnicastPublisher(uint16_t request, LINE_Diag_ListenerCallback_t callback);
+void LINE_Diag_RegisterUnicastPublisher(uint16_t request, LINE_Diag_PublisherCallback_t callback);
 
 /**
  * @brief Returns whether the peripheral is responding to the diagnostic (unicast) request
