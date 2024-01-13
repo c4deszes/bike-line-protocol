@@ -1,9 +1,43 @@
 #include "line_diagnostics.h"
 
-uint8_t assignedAddress = LINE_DIAG_UNICAST_UNASSIGNED_ID;
+typedef struct {
+    uint16_t request;
+    LINE_Diag_ListenerCallback_t callback;
+} diag_service_listener_entry_t;
 
-void LINE_Diag_Init(uint8_t diag_address) {
+typedef struct {
+    uint16_t request;
+    LINE_Diag_PublisherCallback_t callback;
+} diag_service_publisher_entry_t;
+
+static uint8_t assignedAddress;
+static uint8_t diagServiceListenerIndex;
+static diag_service_listener_entry_t diagServiceListeners[16];
+static uint8_t diagServicePublisherIndex;
+static diag_service_publisher_entry_t diagServicePublishers[16];
+
+void LINE_Diag_Init() {
+    assignedAddress = LINE_DIAG_UNICAST_UNASSIGNED_ID;
+    diagServiceListenerIndex = 0;
+    diagServicePublisherIndex = 0;
+}
+
+void LINE_Diag_SetAddress(uint8_t diag_address) {
     assignedAddress = diag_address;
+}
+
+void LINE_Diag_RegisterUnicastListener(uint16_t request, LINE_Diag_PublisherCallback_t callback) {
+    // TODO: validate index, inputs
+    diagServiceListeners[diagServiceListenerIndex].request = request;
+    diagServiceListeners[diagServiceListenerIndex].callback = callback;
+    diagServiceListenerIndex++;
+}
+
+void LINE_Diag_RegisterUnicastPublisher(uint16_t request, LINE_Diag_ListenerCallback_t callback) {
+    // TODO: validate index, inputs
+    diagServicePublishers[diagServicePublisherIndex].request = request;
+    diagServicePublishers[diagServicePublisherIndex].callback = callback;
+    diagServicePublisherIndex++;
 }
 
 bool LINE_Diag_RespondsTo(uint16_t request) {
@@ -22,6 +56,12 @@ bool LINE_Diag_RespondsTo(uint16_t request) {
     }
     else if (request == LINE_DIAG_UNICAST_ID(LINE_DIAG_REQUEST_SW_NUMBER, assignedAddress)) {
         return true;
+    }
+
+    for (int i = 0; i < diagServicePublisherIndex; i++) {
+        if (request == LINE_DIAG_UNICAST_ID(diagServicePublishers[i].request, assignedAddress)) {
+            return true;
+        }
     }
 
     return false;
@@ -61,6 +101,13 @@ bool LINE_Diag_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload
         payload[3] = sw_number->reserved;
         return true;
     }
+    else {
+        for (int i = 0; i < diagServicePublisherIndex; i++) {
+            if (request == LINE_DIAG_UNICAST_ID(diagServicePublishers[i].request, assignedAddress)) {
+                return diagServicePublishers[i].callback(request, size, payload);
+            }
+        }
+    }
     return false;
 }
 
@@ -75,6 +122,12 @@ bool LINE_Diag_ListensTo(uint16_t request) {
         return true;
     }
 
+    for (int i = 0; i < diagServiceListenerIndex; i++) {
+        if (request == LINE_DIAG_UNICAST_ID(diagServiceListeners[i].request, assignedAddress)) {
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -87,6 +140,14 @@ void LINE_Diag_OnRequest(uint16_t request, uint8_t size, uint8_t* payload) {
     }
     else if (request == LINE_DIAG_REQUEST_SHUTDOWN) {
         LINE_Diag_OnShutdown();
+    }
+    else {
+        for (int i = 0; i < diagServiceListenerIndex; i++) {
+            if (request == LINE_DIAG_UNICAST_ID(diagServiceListeners[i].request, assignedAddress)) {
+                diagServiceListeners[i].callback(request, size, payload);
+                break;
+            }
+        }
     }
 }
 

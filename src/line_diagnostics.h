@@ -61,17 +61,20 @@ typedef struct {
     uint8_t reserved;
 } LINE_Diag_SoftwareVersion_t;
 
+typedef void (*LINE_Diag_ListenerCallback_t)(uint16_t request, uint8_t size, uint8_t* payload);
+typedef bool (*LINE_Diag_PublisherCallback_t)(uint16_t request, uint8_t* size, uint8_t* payload);
+
 /**
  * @brief Initializes the diagnostic layer, without it the peripheral won't listen or respond to
- *        unicast requests only broadcast ones.
- * 
- * @param diag_address Diagnostic address
+ *        any diagnostic requests.
  */
-void LINE_Diag_Init(uint8_t diag_address);
+void LINE_Diag_Init();
 
-void LINE_Diag_RegisterUnicastListener(uint16_t request, void* callback);
+void LINE_Diag_SetAddress(uint8_t diag_address);
 
-void LINE_Diag_RegisterUnicastPublisher(uint16_t request, void* callback);
+void LINE_Diag_RegisterUnicastListener(uint16_t request, LINE_Diag_PublisherCallback_t callback);
+
+void LINE_Diag_RegisterUnicastPublisher(uint16_t request, LINE_Diag_ListenerCallback_t callback);
 
 /**
  * @brief Returns whether the peripheral is responding to the diagnostic (unicast) request
