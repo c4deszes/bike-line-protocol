@@ -26,14 +26,14 @@ void LINE_Diag_SetAddress(uint8_t diag_address) {
     assignedAddress = diag_address;
 }
 
-void LINE_Diag_RegisterUnicastListener(uint16_t request, LINE_Diag_PublisherCallback_t callback) {
+void LINE_Diag_RegisterUnicastListener(uint16_t request, LINE_Diag_ListenerCallback_t callback) {
     // TODO: validate index, inputs
     diagServiceListeners[diagServiceListenerIndex].request = request;
     diagServiceListeners[diagServiceListenerIndex].callback = callback;
     diagServiceListenerIndex++;
 }
 
-void LINE_Diag_RegisterUnicastPublisher(uint16_t request, LINE_Diag_ListenerCallback_t callback) {
+void LINE_Diag_RegisterUnicastPublisher(uint16_t request, LINE_Diag_PublisherCallback_t callback) {
     // TODO: validate index, inputs
     diagServicePublishers[diagServicePublisherIndex].request = request;
     diagServicePublishers[diagServicePublisherIndex].callback = callback;
