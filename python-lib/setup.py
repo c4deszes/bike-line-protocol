@@ -12,7 +12,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/c4deszes/bike-line-protocol",
     packages=find_packages(),
-    package_data={'': ['*.lark']},
+    package_data={},
     license='MIT',
     keywords=['LINE'],
     install_requires=[

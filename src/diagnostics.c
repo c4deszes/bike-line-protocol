@@ -115,9 +115,11 @@ bool LINE_Diag_ListensTo(uint16_t request) {
     if (request == LINE_DIAG_REQUEST_WAKEUP) {
         return true;
     }
+    // TODO: this range should be limited
     if (request > LINE_DIAG_BROADCAST_ID_MIN && request < LINE_DIAG_BROADCAST_ID_MAX) {
         return true;
     }
+    // TODO: this range should be limited
     if (request > LINE_DIAG_UNICAST_ID_MIN && request < LINE_DIAG_UNICAST_ID_MAX) {
         return true;
     }
@@ -140,6 +142,19 @@ void LINE_Diag_OnRequest(uint16_t request, uint8_t size, uint8_t* payload) {
     }
     else if (request == LINE_DIAG_REQUEST_SHUTDOWN) {
         LINE_Diag_OnShutdown();
+    }
+    else if (request == LINE_DIAG_REQUEST_CONDITIONAL_CHANGE_ADDRESS) {
+        if (size == 5) {
+            uint32_t targetSerial = payload[0] | (((uint32_t)payload[1]) << 8) | (((uint32_t)payload[2]) << 16) | (((uint32_t)payload[3]) << 24);
+            if (targetSerial == LINE_Diag_GetSerialNumber()) {
+                uint8_t oldAddress = assignedAddress;
+                LINE_Diag_SetAddress(payload[4]);
+                LINE_Diag_OnConditionalChangeAddress(oldAddress, payload[4]);
+            }
+            else if(payload[4] == assignedAddress) {
+                LINE_Diag_SetAddress(LINE_DIAG_UNICAST_UNASSIGNED_ID);
+            }
+        }
     }
     else {
         for (int i = 0; i < diagServiceListenerIndex; i++) {

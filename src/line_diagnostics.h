@@ -68,7 +68,7 @@ typedef bool (*LINE_Diag_PublisherCallback_t)(uint16_t request, uint8_t* size, u
  * @brief Initializes the diagnostic layer, without it the peripheral won't listen or respond to
  *        any diagnostic requests.
  */
-void LINE_Diag_Init();
+void LINE_Diag_Init(void);
 
 void LINE_Diag_SetAddress(uint8_t diag_address);
 

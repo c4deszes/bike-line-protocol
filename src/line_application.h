@@ -47,6 +47,8 @@ bool LINE_App_RespondsTo(uint16_t request);
 bool LINE_App_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
 
 // generated stuff
+void LINE_API_Init(void);
+
 bool LINE_API_RespondsTo(uint16_t request);
 
 bool LINE_API_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
