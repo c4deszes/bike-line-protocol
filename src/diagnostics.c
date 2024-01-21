@@ -1,5 +1,7 @@
 #include "line_diagnostics.h"
 
+#include <stdlib.h>
+
 typedef struct {
     uint16_t request;
     LINE_Diag_ListenerCallback_t callback;
@@ -76,12 +78,17 @@ bool LINE_Diag_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload
     }
     else if (request == LINE_DIAG_UNICAST_ID(LINE_DIAG_REQUEST_POWER_STATUS, assignedAddress)) {
         LINE_Diag_PowerStatus_t* status = LINE_Diag_GetPowerStatus();
-        *size = sizeof(LINE_Diag_PowerStatus_t);
-        payload[0] = status->U_status;
-        payload[1] = status->BOD_status;
-        payload[2] = status->I_operating;
-        payload[3] = status->I_sleep;
-        return true;
+        if (status == NULL) {
+            return false;
+        }
+        else {
+            *size = sizeof(LINE_Diag_PowerStatus_t);
+            payload[0] = status->U_status;
+            payload[1] = status->BOD_status;
+            payload[2] = status->I_operating;
+            payload[3] = status->I_sleep;
+            return true;
+        }
     }
     else if (request == LINE_DIAG_UNICAST_ID(LINE_DIAG_REQUEST_SERIAL_NUMBER, assignedAddress)) {
         uint32_t serial = LINE_Diag_GetSerialNumber();
@@ -94,12 +101,17 @@ bool LINE_Diag_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload
     }
     else if (request == LINE_DIAG_UNICAST_ID(LINE_DIAG_REQUEST_SW_NUMBER, assignedAddress)) {
         LINE_Diag_SoftwareVersion_t* sw_number = LINE_Diag_GetSoftwareVersion();
-        *size = sizeof(LINE_Diag_SoftwareVersion_t);
-        payload[0] = sw_number->major;
-        payload[1] = sw_number->minor;
-        payload[2] = sw_number->patch;
-        payload[3] = sw_number->reserved;
-        return true;
+        if (sw_number == NULL) {
+            return false;
+        }
+        else {
+            *size = sizeof(LINE_Diag_SoftwareVersion_t);
+            payload[0] = sw_number->major;
+            payload[1] = sw_number->minor;
+            payload[2] = sw_number->patch;
+            payload[3] = sw_number->reserved;
+            return true;
+        }
     }
     else {
         for (int i = 0; i < diagServicePublisherIndex; i++) {
@@ -165,6 +177,24 @@ void LINE_Diag_OnRequest(uint16_t request, uint8_t size, uint8_t* payload) {
         }
     }
 }
+
+static LINE_Diag_PowerStatus_t* _LINE_Diag_GetPowerStatus_default(void) {
+    return NULL;
+}
+
+LINE_Diag_PowerStatus_t* LINE_Diag_GetPowerStatus(void) __attribute__((weak, alias("_LINE_Diag_GetPowerStatus_default")));
+
+static LINE_Diag_PowerStatus_t* _LINE_Diag_GetPowerStatus_default(void) {
+    return NULL;
+}
+
+LINE_Diag_SoftwareVersion_t* LINE_Diag_GetSoftwareVersion(void) __attribute__((weak, alias("_LINE_Diag_GetPowerStatus_default")));
+
+static void _LINE_Diag_OnConditionalChangeAddress_default(uint8_t old_address, uint8_t new_address) {
+
+}
+
+void LINE_Diag_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address) __attribute__((weak, alias("_LINE_Diag_OnConditionalChangeAddress_default")));;
 
 static void _no_handler(void) {
     // Empty function for not implemented callbacks
