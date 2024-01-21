@@ -184,11 +184,11 @@ static LINE_Diag_PowerStatus_t* _LINE_Diag_GetPowerStatus_default(void) {
 
 LINE_Diag_PowerStatus_t* LINE_Diag_GetPowerStatus(void) __attribute__((weak, alias("_LINE_Diag_GetPowerStatus_default")));
 
-static LINE_Diag_PowerStatus_t* _LINE_Diag_GetPowerStatus_default(void) {
+static LINE_Diag_SoftwareVersion_t* _LINE_Diag_GetSoftwareVersion_default(void) {
     return NULL;
 }
 
-LINE_Diag_SoftwareVersion_t* LINE_Diag_GetSoftwareVersion(void) __attribute__((weak, alias("_LINE_Diag_GetPowerStatus_default")));
+LINE_Diag_SoftwareVersion_t* LINE_Diag_GetSoftwareVersion(void) __attribute__((weak, alias("_LINE_Diag_GetSoftwareVersion_default")));
 
 static void _LINE_Diag_OnConditionalChangeAddress_default(uint8_t old_address, uint8_t new_address) {
 
