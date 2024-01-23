@@ -15,11 +15,13 @@ extern "C"
 #define LINE_DIAG_UNICAST_ID_MAX   0x0FFF
 #define LINE_DIAG_UNICAST_ID(request, id) (request | id)
 #define LINE_DIAG_UNICAST_UNASSIGNED_ID 0x0
+#define LINE_DIAG_UNICAST_BROADCAST_ID 0xF
 
 // Broadcast frames
 #define LINE_DIAG_REQUEST_WAKEUP 0x0000
 #define LINE_DIAG_REQUEST_SLEEP  0x0100
 #define LINE_DIAG_REQUEST_SHUTDOWN 0x0101
+#define LINE_DIAG_REQUEST_CONDITIONAL_CHANGE_ADDRESS 0x01E0
 
 // Unicast frames (mandatory)
 #define LINE_DIAG_REQUEST_OP_STATUS 0x0200
@@ -30,9 +32,12 @@ extern "C"
 // Unicast frames (optional)
 #define LINE_DIAG_REQUEST_SW_RESET 0x0240
 
-#define LINE_DIAG_OP_STATUS_OK 0
-#define LINE_DIAG_OP_STATUS_WARN 1
-#define LINE_DIAG_OP_STATUS_ERROR 2
+#define LINE_DIAG_OP_STATUS_INIT 0x00
+#define LINE_DIAG_OP_STATUS_OK 0x01
+#define LINE_DIAG_OP_STATUS_WARN 0x02
+#define LINE_DIAG_OP_STATUS_ERROR 0x03
+#define LINE_DIAG_OP_STATUS_BOOT 0x40
+#define LINE_DIAG_OP_STATUS_BOOT_ERROR 0x41
 
 #define LINE_DIAG_POWER_STATUS_VOLTAGE_OK 0
 #define LINE_DIAG_POWER_STATUS_VOLTAGE_LOW 1
@@ -56,13 +61,20 @@ typedef struct {
     uint8_t reserved;
 } LINE_Diag_SoftwareVersion_t;
 
+typedef void (*LINE_Diag_ListenerCallback_t)(uint16_t request, uint8_t size, uint8_t* payload);
+typedef bool (*LINE_Diag_PublisherCallback_t)(uint16_t request, uint8_t* size, uint8_t* payload);
+
 /**
  * @brief Initializes the diagnostic layer, without it the peripheral won't listen or respond to
- *        unicast requests only broadcast ones.
- * 
- * @param diag_address Diagnostic address
+ *        any diagnostic requests.
  */
-void LINE_Diag_Init(uint8_t diag_address);
+void LINE_Diag_Init(void);
+
+void LINE_Diag_SetAddress(uint8_t diag_address);
+
+void LINE_Diag_RegisterUnicastListener(uint16_t request, LINE_Diag_ListenerCallback_t callback);
+
+void LINE_Diag_RegisterUnicastPublisher(uint16_t request, LINE_Diag_PublisherCallback_t callback);
 
 /**
  * @brief Returns whether the peripheral is responding to the diagnostic (unicast) request
@@ -123,6 +135,14 @@ void LINE_Diag_OnSleep(void);
  * @note No implementation is required, default implementation is empty
  */
 void LINE_Diag_OnShutdown(void);
+
+/**
+ * @brief Called when conditional change address request has been received
+ * 
+ * @note This is called after the address has already been changed, no implementation required
+ *       unless the peripheral wants to save it's address in EEPROM
+ */
+void LINE_Diag_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address);
 
 /**
  * @brief Returns the current operational status code (ok, warn, error)

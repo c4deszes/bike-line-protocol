@@ -3,30 +3,43 @@ from types import SimpleNamespace
 import logging
 import argparse
 import sys
+import time
 
 from .constants import *
+from ..monitor.config import SignalRef
 if TYPE_CHECKING:
     from .transport import LineSerialTransport
     from ..network import Network
+    from ..monitor.measurement import SignalListener
 
 logger = logging.getLogger(__name__)
 
 class LineMaster():
 
-    def __init__(self, transport: 'LineSerialTransport', network: 'Network') -> None:
+    def __init__(self, transport: 'LineSerialTransport', network: 'Network' = None) -> None:
         self.transport = transport
         self.network = network
+        self.listener = None
         self.requests = {}
-        for request in network.requests:
-            self.requests[request.name] = {}
-            for signal in request.signals:
-                # TODO: initial value support
-                self.requests[request.name][signal.name] = 0
+        if network:
+            for request in network.requests:
+                self.requests[request.name] = {}
+                for signal in request.signals:
+                    # TODO: initial value support
+                    self.requests[request.name][signal.name] = 0
+
+    def add_listener(self, listener: 'SignalListener'):
+        self.listener = listener
 
     def request_data(self, id: str):
         request = self.network.get_request(id)
         data = self.transport.request_data(request.id)
         signals = request.decode(data)
+
+        if self.listener:
+            current_time = time.time()
+            for (name, value) in signals.items():
+                self.listener.on_signal(current_time, SignalRef(request, request.get_signal(name)), value)
 
         strings = []
         for (name, value) in signals.items():
@@ -34,7 +47,13 @@ class LineMaster():
             strings.append(f"{name}={value}")
         logger.debug('%s', ', '.join(strings))
 
-        # TODO: support for 
+        # TODO: support for
+
+    def send_data(self, request, data):
+        self.transport.send_data(request, data)
+
+    def request(self, request):
+        return self.transport.request_data(request)
 
     def wakeup(self):
         """
@@ -57,20 +76,31 @@ class LineMaster():
         self.transport.send_data(LINE_DIAG_REQUEST_SHUTDOWN, [])
         logger.info("Shutdown.")
 
+    def conditional_change_address(self, serial: int, new_address: int):
+        self.transport.send_data(LINE_DIAG_REQUEST_COND_CHANGE_ADDRESS, list(int.to_bytes(serial, 4, 'little')) + [new_address])
+        logger.info("Assigned Node=%01X to SN=0x%08X", new_address, serial)
+
     def diag_unicast_request(self, diag_code, id: int) -> List[int]:
         return self.transport.request_data(diag_code | id)
 
-    def get_operation_status(self, id: int) -> Literal['ok', 'warn', 'error']:
+    def get_operation_status(self, id: int) -> Literal['init', 'ok', 'warn', 'error', 'boot', 'boot_error']:
         response = self.diag_unicast_request(LINE_DIAG_REQUEST_OP_STATUS, id)
         if len(response) != 1:
             logger.error('Unexpected response to op. status request! %s', response)
             raise ValueError('Unexpected response.')
+        status = 'INVALID'
+        if response[0] == LINE_DIAG_OP_STATUS_INIT:
+            status = 'init'
         if response[0] == LINE_DIAG_OP_STATUS_OK:
             status = 'ok'
         elif response[0] == LINE_DIAG_OP_STATUS_WARN:
             status = 'warn'
         elif response[0] == LINE_DIAG_OP_STATUS_ERROR:
             status = 'error'
+        elif response[0] == LINE_DIAG_OP_STATUS_BOOT:
+            status = 'boot'
+        elif response[0] == LINE_DIAG_OP_STATUS_BOOT_ERROR:
+            status = 'boot_error'
         logger.info('Node=%01X, Status=%s', id, status)
         return status
 

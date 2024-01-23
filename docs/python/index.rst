@@ -4,6 +4,8 @@ Python library
 .. toctree::
     :hidden:
 
-    cli
-    monitoring
+    analyze
+    codegen
+    monitor
     network
+    plot

@@ -33,5 +33,7 @@ def main():
 
     codegen(network, network.get_node(args.node), args.output)
 
+    return 0
+
 if __name__ == '__main__':
     sys.exit(main())

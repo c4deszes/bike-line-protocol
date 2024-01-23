@@ -91,22 +91,28 @@ void LINE_Transport_Receive(uint8_t data) {
             currentResponding = LINE_Transport_RespondsTo(currentRequest);
 
             if (currentResponding) {
-                LINE_Transport_PrepareResponse(currentRequest, &outSize, outData);
-                uint8_t checksum = outSize + LINE_DATA_CHECKSUM_OFFSET;
-                for (int i = 0; i<outSize;i++) {
-                    checksum += outData[i];
-                }
+                bool willRespond = LINE_Transport_PrepareResponse(currentRequest, &outSize, outData);
+                if (willRespond) {
+                    uint8_t checksum = outSize + LINE_DATA_CHECKSUM_OFFSET;
+                    for (int i = 0; i<outSize;i++) {
+                        checksum += outData[i];
+                    }
 
-                if (!isOneWire && currentResponding) {
-                    // In Two-wire mode when responding
-                    // TODO: might have to change state only after response has been flushed
-                    currentState = protocol_state_wait_sync;
-                    LINE_Transport_WriteResponse(outSize, outData, checksum);
+                    if (!isOneWire && currentResponding) {
+                        // In Two-wire mode when responding
+                        // TODO: might have to change state only after response has been flushed
+                        currentState = protocol_state_wait_sync;
+                        LINE_Transport_WriteResponse(outSize, outData, checksum);
+                    }
+                    else if(currentResponding) {
+                        // In One-wire mode it receives the data sent out so the statemachine has to continue
+                        currentState = protocol_state_wait_size;
+                        LINE_Transport_WriteResponse(outSize, outData, checksum);
+                    }
                 }
-                else if(currentResponding) {
-                    // In One-wire mode it receives the data sent out so the statemachine has to continue
+                else {
+                    // TODO: do we timeout here? or let the network take it's own course, timeout via update function
                     currentState = protocol_state_wait_size;
-                    LINE_Transport_WriteResponse(outSize, outData, checksum);
                 }
             }
             else {
@@ -155,10 +161,14 @@ void LINE_Transport_Receive(uint8_t data) {
     }
 }
 
-static void _no_handler(void) {
+static void _no_handler1(bool response, uint16_t request, line_transport_error error_type) {
     // Empty function for not implemented callbacks
 }
 
-void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) __attribute__((weak, alias("_no_handler")));
+void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) __attribute__((weak, alias("_no_handler1")));
 
-void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_t* payload) __attribute__((weak, alias("_no_handler")));
+static void _no_handler2(bool response, uint16_t request, uint8_t size, uint8_t* payload) {
+    // Empty function for not implemented callbacks
+}
+
+void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_t* payload) __attribute__((weak, alias("_no_handler2")));

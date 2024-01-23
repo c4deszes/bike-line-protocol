@@ -52,7 +52,7 @@ class MappingEncoder(SignalEncoder):
     def decode(self, value: int) -> str:
         return self.mapping[value]
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class Signal():
     name: str
     offset: int
@@ -108,8 +108,6 @@ class Request():
             elif signal.width <= 32:
                 fields.append((signal.name, ctypes.c_uint32, signal.width))
             offset += signal.width
-        if size == 7:
-            print(fields)
         return fields
     
     def get_signal(self, name: str) -> Signal:

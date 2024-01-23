@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define LINE_NETWORK_{{network.name}}_BAUDRATE {{network.baudrate}}
+
 {% for node in network.nodes %}
 #define LINE_NODE_{{node.name}}_DIAG_ADDRESS 0x{{'%01X' % node.address}}
 {% endfor %}
@@ -25,7 +27,15 @@ typedef union {
         {% if signal.offset > position.value -%}
         unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
         {% endif %}
-        unsigned int {{signal.name}} : {{signal.width}};
+
+        {% if signal.width <= 8 %}
+        uint8_t {{signal.name}} : {{signal.width}};
+        {% elif signal.width <= 16 %}
+        uint16_t {{signal.name}} : {{signal.width}};
+        {% elif signal.width <= 32 %}
+        uint32_t {{signal.name}} : {{signal.width}};
+        {% endif %}
+
         {%- set position.value = position.value + signal.width -%}
     {%- endfor %}
     {%- if position.value < request.size * 8 %}
@@ -64,7 +74,15 @@ typedef union {
         {% if signal.offset > position.value -%}
         unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
         {% endif %}
-        unsigned int {{signal.name}} : {{signal.width}};
+        
+        {% if signal.width <= 8 %}
+        uint8_t {{signal.name}} : {{signal.width}};
+        {% elif signal.width <= 16 %}
+        uint16_t {{signal.name}} : {{signal.width}};
+        {% elif signal.width <= 32 %}
+        uint32_t {{signal.name}} : {{signal.width}};
+        {% endif %}
+
         {%- set position.value = position.value + signal.width -%}
     {%- endfor %}
     {%- if position.value < request.size * 8 %}

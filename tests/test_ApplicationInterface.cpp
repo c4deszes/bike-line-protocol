@@ -36,6 +36,8 @@ bool LINE_API_RespondsTo(uint16_t request) {
     return false;
 }
 
+FAKE_VOID_FUNC0(LINE_Diag_Init);
+
 FAKE_VOID_FUNC3(LINE_Diag_OnRequest, uint16_t, uint8_t, uint8_t*);
 FAKE_VOID_FUNC3(LINE_API_OnRequest, uint16_t, uint8_t, uint8_t*);
 
