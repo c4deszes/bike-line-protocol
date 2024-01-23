@@ -75,7 +75,7 @@ void setup() {
   Serial1.begin(19200);
 
   LINE_App_Init();
-  LINE_Diag_Init(0x4);
+  LINE_Diag_SetAddress(0x4);
   LINE_Transport_Init(true);
 
   pinMode(8, OUTPUT);
