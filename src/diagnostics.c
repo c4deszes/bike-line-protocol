@@ -160,11 +160,13 @@ void LINE_Diag_OnRequest(uint16_t request, uint8_t size, uint8_t* payload) {
             uint32_t targetSerial = payload[0] | (((uint32_t)payload[1]) << 8) | (((uint32_t)payload[2]) << 16) | (((uint32_t)payload[3]) << 24);
             if (targetSerial == LINE_Diag_GetSerialNumber()) {
                 uint8_t oldAddress = assignedAddress;
+                // TODO: validate new address
                 LINE_Diag_SetAddress(payload[4]);
                 LINE_Diag_OnConditionalChangeAddress(oldAddress, payload[4]);
             }
             else if(payload[4] == assignedAddress) {
                 LINE_Diag_SetAddress(LINE_DIAG_UNICAST_UNASSIGNED_ID);
+                // TODO: callout unassign
             }
         }
     }
@@ -177,6 +179,8 @@ void LINE_Diag_OnRequest(uint16_t request, uint8_t size, uint8_t* payload) {
         }
     }
 }
+
+// TODO: warnings on default symbols
 
 static LINE_Diag_PowerStatus_t* _LINE_Diag_GetPowerStatus_default(void) {
     return NULL;
