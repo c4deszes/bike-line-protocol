@@ -6,6 +6,7 @@ Python library
 
     analyze
     codegen
+    discovery
     monitor
     network
     plot

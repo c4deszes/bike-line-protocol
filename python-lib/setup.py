@@ -39,7 +39,9 @@ setup(
     entry_points={
         'console_scripts': [
             'line-codegen=line_protocol.codegen.generator:main',
-            'line-monitor=line_protocol.monitor.cli:main'
+            'line-monitor=line_protocol.monitor.cli:main',
+            'line-plot=line_protocol.plot.ui:main',
+            'line-discovery=line_protocol.util.discovery:main'
         ]
     },
     classifiers=[
