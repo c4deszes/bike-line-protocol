@@ -4,6 +4,7 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from threading import Thread
+import serial.tools.list_ports
 
 import logging
 
@@ -51,7 +52,9 @@ class App(customtkinter.CTk):
         frame_ConfigPanel = customtkinter.CTkFrame(self)
         frame_ConfigPanel.grid(row=0, column=0, columnspan=2, sticky='nesw')
 
-        self.combo_PortSelect = customtkinter.CTkComboBox(frame_ConfigPanel, values=['COM4'])
+        ports = serial.tools.list_ports.comports()
+
+        self.combo_PortSelect = customtkinter.CTkComboBox(frame_ConfigPanel, values=[x.device for x in ports])
         self.combo_PortSelect.grid(row=0, column=0, padx=10, pady=10, sticky='e')
         self.checkbox_MasterMode = customtkinter.CTkCheckBox(frame_ConfigPanel, text='Master')
         self.checkbox_MasterMode.grid(row=0, column=1, padx=10, pady=10, sticky='e')
@@ -174,7 +177,7 @@ class App(customtkinter.CTk):
             ax = figure.add_subplot(len(self.measurement.config.plots), 1, i+1)
             ax.set_title(plot.name)
             ax.set_xlabel('Time')
-            ax.set_xlim(0, 60)
+            #ax.set_xlim(0, 10)
             self.measurement.axis[plot.name] = {
                 'axis': ax,
                 'signals': {}
@@ -190,7 +193,7 @@ class App(customtkinter.CTk):
         self.update_traffic()
         self.update_plots()
 
-        self.after(10, app.update_ui)
+        self.after(10, self.update_ui)
 
     def update_plots(self):
         if hasattr(self, 'canvas'):
@@ -209,16 +212,20 @@ class App(customtkinter.CTk):
         if hasattr(self.measurement, 'traffic_logger') and self.measurement.traffic_logger.has_changed():
             lastIndex = len(self.measurement.traffic_logger.traffic.logs)
             for entry in self.measurement.traffic_logger.traffic.logs[self.measurement.lastTrafficIndex:lastIndex]:
-                self.list_TrafficEntries.insert('', customtkinter.END, values=(f"{entry.timestamp:.03f}", f"0x{entry.request:04X}", str(entry)))
-                # self.list_TrafficEntries.see() TODO autoscroll
+                item = self.list_TrafficEntries.insert('', customtkinter.END, values=(f"{entry.timestamp:.03f}", f"0x{entry.request:04X}", str(entry)))
+                # TODO: conditional autoscroll
+                self.list_TrafficEntries.see(item)
             self.measurement.lastTrafficIndex = lastIndex
 
     def open_configuration(self):
         print("button pressed")
 
-#customtkinter.filedialog.askopenfile()
-
-if __name__ == '__main__':
+def main():
     app = App()
     app.after(10, app.update_ui)
     app.mainloop()
+
+    return 0
+
+if __name__ == '__main__':
+    main()
