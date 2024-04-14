@@ -2,6 +2,7 @@
 #define LINE_PROTOCOL_APP_GEN_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define LINE_NETWORK_{{network.name}}_BAUDRATE {{network.baudrate}}
 
@@ -50,6 +51,8 @@ typedef union {
 
 extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
 
+bool LINE_Request_{{request.name}}_flag(void);
+
 {% for signal in request.signals|sort(attribute='offset') -%}
 #define LINE_SET_{{request.name}}_{{signal.name}}_SIGNAL(value) LINE_{{request.name}}_data.fields.{{signal.name}} = value;
 {% endfor %}
@@ -96,6 +99,8 @@ typedef union {
 // assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
 
 extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+
+bool LINE_Request_{{request.name}}_flag(void);
 {% endfor %}
 
 #endif
