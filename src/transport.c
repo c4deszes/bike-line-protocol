@@ -161,6 +161,19 @@ void LINE_Transport_Receive(uint8_t data) {
     }
 }
 
+void LINE_Transport_Request(uint16_t request) {
+    if (currentState != protocol_state_wait_sync) {
+        // Rejecting send while the bus active
+        return;
+    }
+
+    LINE_Transport_WriteRequest(request_code(request));
+
+    if (!isOneWire) {
+        currentState = protocol_state_wait_size;
+    }
+}
+
 static void _no_handler1(bool response, uint16_t request, line_transport_error error_type) {
     // Empty function for not implemented callbacks
 }
