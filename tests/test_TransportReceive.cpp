@@ -7,6 +7,10 @@ extern "C" {
 
 DEFINE_FFF_GLOBALS;
 
+void LINE_Transport_WriteRequest(uint16_t request) {
+    return;
+}
+
 // 
 FAKE_VOID_FUNC4(LINE_Transport_OnData, bool, uint16_t, uint8_t, uint8_t*);
 FAKE_VOID_FUNC3(LINE_Transport_OnError, bool, uint16_t, line_transport_error);
