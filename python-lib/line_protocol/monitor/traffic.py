@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import time
 import binascii
 
-from ..protocol.transport import TransportListener
+from ..protocol.transport import LineTrafficListener
 
 @dataclass_json
 @dataclass
@@ -41,7 +41,7 @@ class TrafficLogs:
     start: float
     logs: List[TrafficBaseRecord]
 
-class TrafficLogger(TransportListener):
+class TrafficLogger(LineTrafficListener):
 
     def __init__(self) -> None:
         self.traffic = TrafficLogs(time.time(), [])

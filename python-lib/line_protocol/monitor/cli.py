@@ -29,7 +29,7 @@ def main():
     if args.master:
         with LineSerialTransport(args.port, baudrate=config.network.baudrate, one_wire=True) as transport:
             traffic_logger = TrafficLogger()
-            transport.add_listener(traffic_logger)
+            #transport(traffic_logger)
 
             measurement = Measurement()
 
@@ -51,8 +51,8 @@ def main():
             if args.dump_signals:
                 measurement.dump_csv(args.dump_signals)
     else:
-        # TODO: implement listener
-        pass
+        with LineSerialTransport(args.port, baudrate=config.network.baudrate, one_wire=True) as transport:
+            pass
 
 if __name__ == '__main__':
     sys.exit(main())

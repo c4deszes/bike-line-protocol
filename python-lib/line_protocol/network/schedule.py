@@ -24,10 +24,10 @@ class WakeupScheduleEntry():
     def perform(self, master: 'LineMaster'):
         master.wakeup()
 
-class SleepScheduleEntry():
+class IdleScheduleEntry():
 
     def perform(self, master: 'LineMaster'):
-        master.sleep()
+        master.idle()
 
 class ShutdownScheduleEntry():
 

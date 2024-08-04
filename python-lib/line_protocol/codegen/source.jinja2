@@ -3,10 +3,12 @@
 
 {% for request in node.publishes %}
 LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+bool LINE_Request_{{request.name}}_flag_internal;
 {% endfor %}
 
 {% for request in node.subscribes %}
 LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+bool LINE_Request_{{request.name}}_flag_internal;
 {% endfor %}
 
 bool LINE_API_RespondsTo(uint16_t request) {
@@ -25,6 +27,7 @@ bool LINE_API_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload)
         for (int i = 0; i < LINE_REQUEST_{{request.name}}_SIZE; i++) {
             payload[i] = LINE_Request_{{request.name}}_data.data[i];
         }
+        LINE_Request_{{request.name}}_flag_internal = true;
         return true;
     }
     {% endfor %}
@@ -47,6 +50,27 @@ void LINE_API_OnRequest(uint16_t request, uint8_t size, uint8_t* payload) {
         for (int i = 0; i < LINE_REQUEST_{{request.name}}_SIZE; i++) {
             LINE_Request_{{request.name}}_data.data[i] = payload[i];
         }
+        LINE_Request_{{request.name}}_flag_internal = true;
     }
     {% endfor %}
 }
+
+{% for request in node.subscribes %}
+bool LINE_Request_{{request.name}}_flag(void) {
+    if (LINE_Request_{{request.name}}_flag_internal) {
+        LINE_Request_{{request.name}}_flag_internal = false;
+        return true;
+    }
+    return false;
+}
+{% endfor %}
+
+{% for request in node.publishes %}
+bool LINE_Request_{{request.name}}_flag(void) {
+    if (LINE_Request_{{request.name}}_flag_internal) {
+        LINE_Request_{{request.name}}_flag_internal = false;
+        return true;
+    }
+    return false;
+}
+{% endfor %}

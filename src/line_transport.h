@@ -73,13 +73,24 @@ bool LINE_Transport_RespondsTo(uint16_t request);
 bool LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
 
 /**
- * @brief Writes the response to the physical layer
+ * @brief Writes the response to the physical layer (implemented at target)
  * 
  * @param size Payload size
  * @param payload Payload
  * @param checksum Checksum value
  */
 void LINE_Transport_WriteResponse(uint8_t size, uint8_t* payload, uint8_t checksum);
+
+void LINE_Transport_Request(uint16_t request);
+
+/**
+ * @brief Requests a frame on the bus (implemented at the target)
+ * 
+ * The function shall write the sync byte and request header to the bus.
+ * 
+ * @param request 
+ */
+void LINE_Transport_WriteRequest(uint16_t request);
 
 /**
  * @brief Called when the data body is received, the consumer should then decide how it should

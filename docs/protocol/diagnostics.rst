@@ -35,16 +35,11 @@ The request code ``0x0000`` is used to wakeup all peripherals, it's an empty mes
 payload. Peripherals will in general wakeup on the line transitions, but it's important that
 peripherals already awake still sense valid messages coming in.
 
-Sleep
+Idle
 ~~~~~
 
-.. todo: idle might be a better name
-
-The request code ``0x0100`` is used to send all peripherals into sleep mode. This mode is selected
+The request code ``0x0100`` is used to send all peripherals into idle mode. This mode is selected
 by the body computer when the bicycle is found to be idle. No payload is provided.
-
-.. note:: The definition of sleep in microcontrollers is often equivalent to a reset state which is
-          not necessarily the case here.
 
 The peripheral is expected to continue operation when a wakeup is received, this also means that the
 ride continues therefore attributes stored for a ride should be recalled, e.g.: distance.
@@ -148,8 +143,6 @@ Request code is ``0x020X``, the response length is 1 byte.
 Get power status
 ~~~~~~~~~~~~~~~~
 
-**Mandatory**
-
 Returns whether the current power conditions are sufficient for the peripheral's operation.
 
 Also returns an estimated operating current used at the time of the request, an estimated or
@@ -213,8 +206,6 @@ Request code is ``0x022X``, the response length is 4 bytes.
 
 Get Software Version
 ~~~~~~~~~~~~~~~~~~~~
-
-**Mandatory**
 
 Returns the software version currently on the peripheral, the version is a semantic version stored
 as 1 byte for each field major, minor, patch and one additional reserved byte for a total of 4 bytes

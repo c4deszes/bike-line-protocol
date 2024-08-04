@@ -19,8 +19,8 @@ Options
 
 **--port**: Serial port to use
 
-**--master**: When set the tool will act as the master, performing one of the schedules, otherwise
-              the tool listens on the network and decodes the requests
+**--master**: When set the tool will act as the master, performing the schedules set in the configuration,
+              otherwise the tool listens on the network and decodes the requests
 
 **--dump-traffic**: When enabled the traffic will be recorded and a file will be written
 
@@ -45,7 +45,6 @@ is called in a loop until the program exits.
             "DumpNetworkInfo"
         ],
         "mainSchedule": "NormalSchedule",
-        "duration": "60s",
         "plots": {
             "SpeedPlot": {
                 "signals": [
@@ -63,7 +62,8 @@ Uncompressed traffic
 --------------------
 
 Used by PC based logging software, every entry has a timestamp relative to the start time.
-Entries are either complete requests with data 
+Entries are either complete requests with data or requests with an error message like timeout, crc
+or header error.
 
 .. code-block:: json
 

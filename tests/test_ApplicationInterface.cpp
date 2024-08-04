@@ -36,6 +36,10 @@ bool LINE_API_RespondsTo(uint16_t request) {
     return false;
 }
 
+void LINE_Transport_WriteRequest(uint16_t request) {
+    return;
+}
+
 FAKE_VOID_FUNC0(LINE_Diag_Init);
 
 FAKE_VOID_FUNC3(LINE_Diag_OnRequest, uint16_t, uint8_t, uint8_t*);

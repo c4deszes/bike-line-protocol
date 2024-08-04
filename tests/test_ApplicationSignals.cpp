@@ -15,6 +15,10 @@ protected:
     }
 };
 
+void LINE_Transport_WriteRequest(uint16_t request) {
+    return;
+}
+
 FAKE_VALUE_FUNC0(uint8_t, LINE_Diag_GetOperationStatus);
 FAKE_VALUE_FUNC0(LINE_Diag_PowerStatus_t*, LINE_Diag_GetPowerStatus);
 FAKE_VALUE_FUNC0(uint32_t, LINE_Diag_GetSerialNumber);
