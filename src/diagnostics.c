@@ -149,8 +149,8 @@ void LINE_Diag_OnRequest(uint16_t request, uint8_t size, uint8_t* payload) {
     if (request == LINE_DIAG_REQUEST_WAKEUP) {
         LINE_Diag_OnWakeup();
     }
-    else if (request == LINE_DIAG_REQUEST_SLEEP) {
-        LINE_Diag_OnSleep();
+    else if (request == LINE_DIAG_REQUEST_IDLE) {
+        LINE_Diag_OnIdle();
     }
     else if (request == LINE_DIAG_REQUEST_SHUTDOWN) {
         LINE_Diag_OnShutdown();
@@ -206,6 +206,6 @@ static void _no_handler(void) {
 
 void LINE_Diag_OnWakeup(void) __attribute__((weak, alias("_no_handler")));
 
-void LINE_Diag_OnSleep(void) __attribute__((weak, alias("_no_handler")));
+void LINE_Diag_OnIdle(void) __attribute__((weak, alias("_no_handler")));
 
 void LINE_Diag_OnShutdown(void) __attribute__((weak, alias("_no_handler")));

@@ -18,7 +18,7 @@ Network has a name and a baudrate setting.
 Nodes
 -----
 
-Each node has an address.
+Each node has an address and requests that it publishes or subscribes to.
 
 .. code-block:: json
 
@@ -33,7 +33,15 @@ Each node has an address.
 Requests
 --------
 
-Requests have an identifier, size and the signals.
+Requests have a unique identifier, size and the signals.
+
+The request shall fit all it's signals, gaps left in there will be padded.
+
+When an encoder is not set the signal will always be encoded and decoded in raw format.
+
+When an initial value and an encoder is provided the value is assumed to be in it's physical format.
+If the encoder is not set the initial value is used as a raw value and by the default the initial
+value is 0.
 
 .. code-block:: json
 
@@ -44,12 +52,14 @@ Requests have an identifier, size and the signals.
             "FrontSpeed": {
                 "offset": 0,
                 "width": 16,
-                "encoder": "SpeedEncoder"
+                "encoder": "SpeedEncoder",
+                "initial": 0
             },
             "RearSpeed": {
                 "offset": 16,
                 "width": 16,
-                "encoder": "SpeedEncoder"
+                "encoder": "SpeedEncoder",
+                "initial": 0
             }
         }
     }
@@ -57,8 +67,13 @@ Requests have an identifier, size and the signals.
 Encoder
 -------
 
+Encoders translate the data in between their network form and their system interpretation.
+
 Formula
 ~~~~~~~
+
+The formula encoder maps an integer range to a physical value range such as speed or angle. Notice
+that this encoder has no limits so the signals entire range is considered valid.
 
 .. code-block:: json
 
@@ -70,6 +85,9 @@ Formula
 
 Mapping
 ~~~~~~~
+
+The mapping encoder maps the integer values to an easily understandable string value, like an on/off
+state or an enumeration.
 
 .. code-block:: json
 
@@ -84,6 +102,10 @@ Mapping
 Schedules
 ---------
 
+Schedules describe how the overall network traffic looks like over time, in it's simplest form a
+schedule table specifies the requests to be sent by the master in order and the delay between those
+requests.
+
 .. code-block:: json
 
     "ConfigSchedule": {
@@ -91,7 +113,7 @@ Schedules
         "entries": [
             {"type": "request", "request": "SpeedStatus"},
             {"type": "wakeup"}
-            {"type": "sleep"},
+            {"type": "idle"},
             {"type": "shutdown"}
             {"type": "opstatus", "node": "RotorSensor"}
             {"type": "pwrstatus", "node": "RotorSensor"}

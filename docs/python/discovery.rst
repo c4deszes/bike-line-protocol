@@ -1,17 +1,23 @@
 Discovery
 =========
 
-Discovers peripherals on a network.
+Discovers peripherals on a network. The tool will act as a master on the bus and probes all
+diagnostic addresses by requesting their operational status. When peripherals do respond the
+tool optionally retrieves the software version, serial number and power status of the devices.
 
 Command
 -------
 
 .. code-block:: bash
 
-    line-discovery --port COM3 --baudrate 9600 --no-info
+    line-discovery --port <port> [--baudrate <baud>] [--no-info]
 
 Options
 -------
+
+**--port**: Serial port to use
+
+**--baudrate**: Serial communication speed, defaults to 19200
 
 **--no-info**: Disables retrival of information such as software version and serial number
 

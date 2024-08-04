@@ -2,7 +2,7 @@ from .network import Network
 from .request import FormulaEncoder, MappingEncoder, Request, Signal, NoneEncoder
 from .nodes import Node
 from typing import List
-from .schedule import Schedule, RequestScheduleEntry, WakeupScheduleEntry, SleepScheduleEntry, ShutdownScheduleEntry, GetOperationStatusScheduleEntry, GetPowerStatusScheduleEntry, GetSerialNumberScheduleEntry, GetSoftwareVersionScheduleEntry
+from .schedule import Schedule, RequestScheduleEntry, WakeupScheduleEntry, IdleScheduleEntry, ShutdownScheduleEntry, GetOperationStatusScheduleEntry, GetPowerStatusScheduleEntry, GetSerialNumberScheduleEntry, GetSoftwareVersionScheduleEntry
 
 import json
 
@@ -18,8 +18,8 @@ def load_schedules(network, obj: dict) -> List[Schedule]:
         for entry in sche['entries']:
             if entry['type'] == 'wakeup':
                 entries.append(WakeupScheduleEntry())
-            elif entry['type'] == 'sleep':
-                entries.append(SleepScheduleEntry())
+            elif entry['type'] == 'idle':
+                entries.append(IdleScheduleEntry())
             elif entry['type'] == 'shutdown':
                 entries.append(ShutdownScheduleEntry())
             elif entry['type'] == 'opstatus':
@@ -58,7 +58,7 @@ def load_network(path: str) -> Network:
             except KeyError:
                 encoder = NoneEncoder('none')
 
-            signal = Signal(sig_name, to_int(sig['offset']), to_int(sig['width']), encoder)
+            signal = Signal(sig_name, to_int(sig['offset']), to_int(sig['width']), sig['initial'] if 'initial' in sig else 0, encoder)
             signals.append(signal)
 
         network.requests.append(Request(name, to_int(req['id']), to_int(req['size']), signals))

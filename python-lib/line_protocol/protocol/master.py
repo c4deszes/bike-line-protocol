@@ -36,18 +36,15 @@ class LineMaster():
         data = self.transport.request_data(request.id)
         signals = request.decode(data)
 
-        if self.listener:
-            current_time = time.time()
-            for (name, value) in signals.items():
-                self.listener.on_signal(current_time, SignalRef(request, request.get_signal(name)), value)
-
+        current_time = time.time()
         strings = []
         for (name, value) in signals.items():
+            if self.listener:
+                self.listener.on_signal(current_time, SignalRef(request, request.get_signal(name)), value)
             self.requests[request.name][name] = value
             strings.append(f"{name}={value}")
-        logger.debug('%s', ', '.join(strings))
 
-        # TODO: support for
+        logger.debug('%s', ', '.join(strings))
 
     def send_data(self, request, data):
         self.transport.send_data(request, data)
@@ -62,12 +59,12 @@ class LineMaster():
         self.transport.send_data(LINE_DIAG_REQUEST_WAKEUP, [])
         logger.info("Wakeup.")
 
-    def sleep(self):
+    def idle(self):
         """
-        Sends all peripherals to sleep
+        Sends all peripherals to idle
         """
-        self.transport.send_data(LINE_DIAG_REQUEST_SLEEP, [])
-        logger.info("Go to sleep.")
+        self.transport.send_data(LINE_DIAG_REQUEST_IDLE, [])
+        logger.info("Go to idle.")
 
     def shutdown(self):
         """

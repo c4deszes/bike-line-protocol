@@ -3,28 +3,56 @@ from typing import List, Union, Dict, Iterable
 import ctypes
 
 class SignalEncoder:
+    """
+    SignalEncoder is an interface for classes that can convert in between the network representation
+    of signal and their physical or system interpretation.
+    """
 
     def __init__(self, name: str) -> None:
         self.name = name
 
     def encode(self, value: Union[str, int, float]) -> int:
+        """
+        Encoder takes strings or numbers and returns an integer that can be packed into responses
+
+        :param value: Physical value
+        :type value: Union[str, int, float]
+        :return: Raw value
+        :rtype: int
+        """
         raise NotImplementedError()
 
     def decode(self, value: int) -> Union[str, int, float]:
+        """
+        Decoder takes raw network data and converts it into their physical representation
+
+        :param value: Raw value
+        :type value: int
+        :return: Physical value
+        :rtype: Union[str, int, float]
+        """
         raise NotImplementedError()
 
 class NoneEncoder(SignalEncoder):
+    """
+    NoneEncoder does no conversion when encoding or decoding, inputs are restricted to integers.
+    """
 
     def __init__(self, name: str) -> None:
         super().__init__(name)
 
     def encode(self, value: int) -> int:
+        if not isinstance(value, int):
+            raise ValueError(f"Unable to encode non-integer {value}")
         return value
     
     def decode(self, value: int) -> int:
         return value
 
 class FormulaEncoder(SignalEncoder):
+    """
+    Formula encoder takes a physical value and maps it to an integer range
+    """
 
     def __init__(self, name: str, scale: float, offset: float) -> None:
         super().__init__(name)
@@ -38,13 +66,16 @@ class FormulaEncoder(SignalEncoder):
         return value * self.scale + self.offset
 
 class MappingEncoder(SignalEncoder):
+    """
+    Mapping encoder takes labels and maps them to integer values
+    """
 
     def __init__(self, name: str, mapping: Dict[int, str]) -> None:
         super().__init__(name)
         self.mapping = mapping
 
     def encode(self, value: str) -> int:
-        for (key, val) in self.mapping:
+        for (key, val) in self.mapping.items():
             if val == value:
                 return key
         raise KeyError()
@@ -57,6 +88,7 @@ class Signal():
     name: str
     offset: int
     width: int
+    initial: Union[int, float, str]
     encoder: SignalEncoder
 
 class Request():
@@ -72,11 +104,8 @@ class Request():
             nonlocal _packed
             _fields_ = _packed
 
-            def __init__(self, _):
+            def __init__(self):
                 super().__init__()
-
-            def __new__(cls, buf=None):
-                return cls.from_buffer_copy(buf)
 
             def _to_dict(self):
                 return {field[0]: getattr(self, field[0]) for field in self._fields_}
@@ -115,14 +144,29 @@ class Request():
             if x.name == name:
                 return x
         raise KeyError()
+    
+    def encode_raw(self, signals: Dict[str, int]):
+        raise NotImplementedError()
 
-    # def encode(self, signals: Dict[str, Union[str, int, float]]):
-    #     #self.data_class.from_param()
-    #     raise NotImplementedError()
+    def encode(self, signals: Dict[str, Union[str, int, float]]):
+        data = self.data_class()
+        for signal in self.signals:
+            if signal.name in signals:
+                if signal.encoder != None:
+                    value = signal.encoder.encode(signals[signal.name])
+                else:
+                    value = signals[signal.name]
+            else:
+                if signal.encoder != None:
+                    value = signal.encoder.encode(signal.initial)
+                else:
+                    value = signal.initial
+            setattr(data, signal.name, value)
+        return list(bytes(data))
     
     def decode_raw(self, data) -> Dict[str, int]:
         # TODO: in some requests the length required is longer than the actual length
-        decoded = self.data_class(bytes(data + [0]))
+        decoded = self.data_class.from_buffer_copy(bytes(data + [0]))
         return decoded.fields
 
     def decode(self, data: Iterable[int]) -> Dict[str, Union[int, str, float]]:

@@ -19,7 +19,7 @@ extern "C"
 
 // Broadcast frames
 #define LINE_DIAG_REQUEST_WAKEUP 0x0000
-#define LINE_DIAG_REQUEST_SLEEP  0x0100
+#define LINE_DIAG_REQUEST_IDLE  0x0100
 #define LINE_DIAG_REQUEST_SHUTDOWN 0x0101
 #define LINE_DIAG_REQUEST_CONDITIONAL_CHANGE_ADDRESS 0x01E0
 
@@ -123,11 +123,11 @@ void LINE_Diag_OnRequest(uint16_t request, uint8_t size, uint8_t* payload);
 void LINE_Diag_OnWakeup(void);
 
 /**
- * @brief Called when the sleep diagnostic request is received
+ * @brief Called when the idle diagnostic request is received
  * 
  * @note No implementation is required, default implementation is empty
  */
-void LINE_Diag_OnSleep(void);
+void LINE_Diag_OnIdle(void);
 
 /**
  * @brief Called when the shutdown diagnostic request is received
