@@ -1,13 +1,13 @@
 import os
 import sys
 import argparse
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 from ..network import Network, load_network, Node
 
 def codegen(network: Network, node: Node, output_path: str):
     env = Environment(
-        loader=PackageLoader('line_protocol', 'codegen'),
+        loader=FileSystemLoader(os.path.dirname(__file__)),
         autoescape=select_autoescape()
     )
     template = env.get_template('header.jinja2')

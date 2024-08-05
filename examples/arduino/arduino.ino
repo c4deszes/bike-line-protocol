@@ -35,12 +35,16 @@ void LINE_Diag_OnWakeup(void) {
   Serial.println("Waking up.");
 }
 
-void LINE_Diag_OnSleep(void) {
-  Serial.println("Going to sleep.");
+void LINE_Diag_OnIdle(void) {
+  Serial.println("Going to idle.");
 }
 
 void LINE_Diag_OnShutdown(void) {
   Serial.println("Shutting down.");
+}
+
+void LINE_Transport_WriteRequest(uint16_t request) {
+    return;
 }
 
 void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) {
