@@ -28,7 +28,7 @@ class Network:
         for a in self.nodes:
             if a.name == name:
                 return a
-        raise LookupError('No such node.')
+        raise LookupError(f'No such node: {name}')
     
     def get_nodes(self) -> List['Node']:
         return self.nodes
@@ -46,7 +46,7 @@ class Network:
         for a in self.requests:
             if a.name == id or a.id == id:
                 return a
-        raise LookupError('No such request.')
+        raise LookupError(f'No such request: {id}')
 
     def get_encoder(self, name: str) -> 'SignalEncoder':
         """
@@ -61,7 +61,7 @@ class Network:
         for a in self.encoders:
             if a.name == name:
                 return a
-        raise LookupError('No such encoder.')
+        raise LookupError(f'No such encoder: {name}')
     
     def get_schedule(self, name: str) -> 'Schedule':
         """
@@ -76,4 +76,4 @@ class Network:
         for a in self.schedules:
             if a.name == name:
                 return a
-        raise LookupError('No such schedule.')
+        raise LookupError(f'No such schedule: {name}')
