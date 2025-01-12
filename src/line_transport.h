@@ -9,24 +9,29 @@ extern "C"
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LINE_SYNC_BYTE 0x55
-#define LINE_REQUEST_PARITY_MASK 0x3FFF
-#define LINE_REQUEST_PARITY_POS 14
-#define LINE_DATA_CHECKSUM_OFFSET 0xA3
+#ifndef LINE_TRANSPORT_CHANNEL_COUNT
+#define LINE_TRANSPORT_CHANNEL_COUNT 1
+#endif
 
-#define LINE_REQUEST_TIMEOUT 5
-#define LINE_DATA_TIMEOUT 5
+#ifndef LINE_TRANSPORT_RX_BUFFER_SIZE
+#define LINE_TRANSPORT_RX_BUFFER_SIZE 255
+#endif
+
+#ifndef LINE_TRANSPORT_TX_BUFFER_SIZE
+#define LINE_TRANSPORT_TX_BUFFER_SIZE 255
+#endif
 
 typedef enum {
     line_transport_error_timeout,
     line_transport_error_header_invalid,
-    line_transport_error_data_invalid
+    line_transport_error_data_invalid,
+    line_transport_error_partial_data
 } line_transport_error;
 
 /**
  * @brief Initializes the transport layer
  */
-void LINE_Transport_Init(bool one_wire);
+void LINE_Transport_Init(uint8_t channel, bool one_wire);
 
 /**
  * @brief Updates the transport layer state, called by the physical layer or the scheduler
@@ -39,7 +44,7 @@ void LINE_Transport_Init(bool one_wire);
  * 
  * @param data Byte received
  */
-void LINE_Transport_Receive(uint8_t data);
+void LINE_Transport_Receive(uint8_t channel, uint8_t data);
 
 /**
  * @brief Updates the transport layer state based on the time elapsed, called by the scheduler
@@ -48,7 +53,7 @@ void LINE_Transport_Receive(uint8_t data);
  * 
  * @param elapsed Time elapsed since the last call in milliseconds
  */
-void LINE_Transport_Update(uint8_t elapsed);
+void LINE_Transport_Update(uint8_t channel, uint8_t elapsed);
 
 /**
  * @brief Called when a valid request code is received, the consumer should then decide whether it
@@ -58,7 +63,7 @@ void LINE_Transport_Update(uint8_t elapsed);
  * @return true if the consumer is responding to this request
  * @return false if the consumer is listening to this request
  */
-bool LINE_Transport_RespondsTo(uint16_t request);
+bool LINE_Transport_RespondsTo(uint8_t channel, uint16_t request);
 
 /**
  * @brief Called when a request is received and the peripheral is responding to, the function
@@ -70,7 +75,7 @@ bool LINE_Transport_RespondsTo(uint16_t request);
  * @return true When the response was successfully prepared
  * @return false Otherwise
  */
-bool LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
+bool LINE_Transport_PrepareResponse(uint8_t channel, uint16_t request, uint8_t* size, uint8_t* payload);
 
 /**
  * @brief Writes the response to the physical layer (implemented at target)
@@ -79,9 +84,9 @@ bool LINE_Transport_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* pa
  * @param payload Payload
  * @param checksum Checksum value
  */
-void LINE_Transport_WriteResponse(uint8_t size, uint8_t* payload, uint8_t checksum);
+void LINE_Transport_WriteResponse(uint8_t channel, uint8_t size, uint8_t* payload, uint8_t checksum);
 
-void LINE_Transport_Request(uint16_t request);
+void LINE_Transport_Request(uint8_t channel, uint16_t request);
 
 /**
  * @brief Requests a frame on the bus (implemented at the target)
@@ -90,7 +95,7 @@ void LINE_Transport_Request(uint16_t request);
  * 
  * @param request 
  */
-void LINE_Transport_WriteRequest(uint16_t request);
+void LINE_Transport_WriteRequest(uint8_t channel, uint16_t request);
 
 /**
  * @brief Called when the data body is received, the consumer should then decide how it should
@@ -101,7 +106,7 @@ void LINE_Transport_WriteRequest(uint16_t request);
  * @param size Data size
  * @param payload Data pointer
  */
-void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_t* payload);
+void LINE_Transport_OnData(uint8_t channel, bool response, uint16_t request, uint8_t size, uint8_t* payload);
 
 /**
  * @brief Called when an error occurs, which can be
@@ -113,7 +118,7 @@ void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_
  * @param request Request code
  * @param error_type Error code
  */
-void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type);
+void LINE_Transport_OnError(uint8_t channel, bool response, uint16_t request, line_transport_error error_type);
 
 #ifdef __cplusplus
 }

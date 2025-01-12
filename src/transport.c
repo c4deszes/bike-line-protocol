@@ -1,4 +1,19 @@
 #include "line_transport.h"
+#include "line_transport_priv.h"
+
+/* Transport layer configuration */
+#if LINE_TRANSPORT_CHANNEL_COUNT < 1
+#error "LINE Protocol transport layer requires at least one channel"
+#endif
+
+#if LINE_TRANSPORT_RX_BUFFER_SIZE < LINE_TRANSPORT_DATA_MAX
+#warning "LINE Protocol transport layer has limited receive buffer size"
+#endif
+
+/* Transport layer constants */
+
+#define LINE_REQUEST_TIMEOUT 5
+#define LINE_DATA_TIMEOUT 5
 
 typedef enum {
     protocol_state_wait_sync,
@@ -9,179 +24,165 @@ typedef enum {
     protocol_state_wait_data_checksum
 } protocol_state;
 
-static uint32_t timestamp;
+typedef struct {
+    bool isOneWire;
 
-static bool isOneWire;
-static uint32_t lastReceived;
-static protocol_state currentState;
-static uint16_t currentRequest;
-static bool currentResponding;
-static uint8_t currentSize;
-static uint8_t currentSizeCounter;
-static uint8_t calculatedChecksum;
-static uint8_t dataBuffer[255];
+    protocol_state currentState;
 
-static uint8_t outSize;
-static uint8_t outData[255];
+    uint32_t timestamp;
+    uint32_t lastReceived;
 
-static uint16_t request_code(uint16_t data) {
-    uint8_t parity1 = 0;
-    uint16_t tempData = data;
-    // TODO: potentially wrong result if data goes outside of the 14bit range
-    while (tempData != 0) {
-        parity1 ^= (tempData & 1);
-        tempData >>= 1;
-    }
+    uint16_t currentRequest;
+    bool currentResponding;
+    uint8_t currentSize;
+    uint8_t currentSizeCounter;
+    uint8_t calculatedChecksum;
+    uint8_t rxBuffer[LINE_TRANSPORT_RX_BUFFER_SIZE];
+    uint8_t outSize;
+    uint8_t txBuffer[LINE_TRANSPORT_TX_BUFFER_SIZE];
+} channel_state;
 
-    uint8_t parity2 = 0;
-    tempData = data;
-    for (int i = 0; i < 6; i++) {
-        parity2 ^= (tempData & 1);
-        tempData >>= 2;
-    }
+static channel_state channels[LINE_TRANSPORT_CHANNEL_COUNT];
 
-    return (((parity1 << 1) | parity2) << LINE_REQUEST_PARITY_POS) | data;
+void LINE_Transport_Init(uint8_t channel, bool one_wire) {
+    if (channel >= LINE_TRANSPORT_CHANNEL_COUNT) return;
+    channels[channel].currentState = protocol_state_wait_sync;
+    channels[channel].lastReceived = 0;
+    channels[channel].timestamp = 0;
+    channels[channel].isOneWire = one_wire;
 }
 
-void LINE_Transport_Init(bool one_wire) {
-    currentState = protocol_state_wait_sync;
-    timestamp = 0;
-    lastReceived = 0;
-    isOneWire = one_wire;
-}
+void LINE_Transport_Update(uint8_t channel, uint8_t elapsed) {
+    if (channel >= LINE_TRANSPORT_CHANNEL_COUNT) return;
+    channel_state *ch = &channels[channel];
+    
+    ch->timestamp += elapsed;
 
-void LINE_Transport_Update(uint8_t elapsed) {
-    timestamp += elapsed;
-
-    if (currentState == protocol_state_wait_request_msb ||
-        currentState == protocol_state_wait_request_lsb) {
-        if (timestamp - lastReceived > LINE_REQUEST_TIMEOUT) {
-            // TODO: error?
-            currentState = protocol_state_wait_sync;
-            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_timeout);
+    if (ch->currentState == protocol_state_wait_request_msb ||
+        ch->currentState == protocol_state_wait_request_lsb) {
+        if (ch->timestamp - ch->lastReceived > LINE_REQUEST_TIMEOUT) {
+            ch->currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(channel, ch->currentResponding, ch->currentRequest, line_transport_error_timeout);
         }
     }
-    else if(currentState == protocol_state_wait_size ||
-            currentSize == protocol_state_wait_data ||
-            currentState == protocol_state_wait_data_checksum) {
-        if (timestamp - lastReceived > LINE_DATA_TIMEOUT) {
-            currentState = protocol_state_wait_sync;
-            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_timeout);
+    else if(ch->currentState == protocol_state_wait_size ||
+            ch->currentState == protocol_state_wait_data ||
+            ch->currentState == protocol_state_wait_data_checksum) {
+        if (ch->timestamp - ch->lastReceived > LINE_DATA_TIMEOUT) {
+            ch->currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(channel, ch->currentResponding, ch->currentRequest, line_transport_error_timeout);
         }
     }
 }
 
-void LINE_Transport_Receive(uint8_t data) {
-    lastReceived = timestamp;
+void LINE_Transport_Receive(uint8_t channel, uint8_t data) {
+    if (channel >= LINE_TRANSPORT_CHANNEL_COUNT) return;
+    channel_state *ch = &channels[channel];
+    ch->lastReceived = ch->timestamp;
 
-    if (currentState == protocol_state_wait_sync && data == LINE_SYNC_BYTE) {
-        currentState = protocol_state_wait_request_msb;
+    if (ch->currentState == protocol_state_wait_sync && data == LINE_SYNC_BYTE) {
+        ch->currentState = protocol_state_wait_request_msb;
     }
-    else if(currentState == protocol_state_wait_request_msb) {
-        currentRequest = (data << 8);
-
-        currentState = protocol_state_wait_request_lsb;
+    else if(ch->currentState == protocol_state_wait_request_msb) {
+        ch->currentRequest = (data << 8);
+        ch->currentState = protocol_state_wait_request_lsb;
     }
-    else if(currentState == protocol_state_wait_request_lsb) {
-        currentRequest |= data;
+    else if(ch->currentState == protocol_state_wait_request_lsb) {
+        ch->currentRequest |= data;
+        uint16_t calculatedParity = request_code(ch->currentRequest & LINE_REQUEST_PARITY_MASK);
+        if (ch->currentRequest == calculatedParity) {
+            ch->currentRequest = (ch->currentRequest & (LINE_REQUEST_PARITY_MASK));
+            ch->currentResponding = LINE_Transport_RespondsTo(channel, ch->currentRequest);
 
-        uint16_t calculatedParity = request_code(currentRequest & LINE_REQUEST_PARITY_MASK);
-        if (currentRequest == calculatedParity) {
-            currentRequest = (currentRequest & (LINE_REQUEST_PARITY_MASK));
-            currentResponding = LINE_Transport_RespondsTo(currentRequest);
-
-            if (currentResponding) {
-                bool willRespond = LINE_Transport_PrepareResponse(currentRequest, &outSize, outData);
+            if (ch->currentResponding) {
+                bool willRespond = LINE_Transport_PrepareResponse(channel, ch->currentRequest, &ch->outSize, ch->txBuffer);
                 if (willRespond) {
-                    uint8_t checksum = outSize + LINE_DATA_CHECKSUM_OFFSET;
-                    for (int i = 0; i<outSize;i++) {
-                        checksum += outData[i];
+                    uint8_t checksum = ch->outSize + LINE_DATA_CHECKSUM_OFFSET;
+                    for (int i = 0; i < ch->outSize; i++) {
+                        checksum += ch->txBuffer[i];
                     }
 
-                    if (!isOneWire && currentResponding) {
-                        // In Two-wire mode when responding
-                        // TODO: might have to change state only after response has been flushed
-                        currentState = protocol_state_wait_sync;
-                        LINE_Transport_WriteResponse(outSize, outData, checksum);
+                    if (!ch->isOneWire && ch->currentResponding) {
+                        ch->currentState = protocol_state_wait_sync;
+                        LINE_Transport_WriteResponse(channel, ch->outSize, ch->txBuffer, checksum);
                     }
-                    else if(currentResponding) {
-                        // In One-wire mode it receives the data sent out so the statemachine has to continue
-                        currentState = protocol_state_wait_size;
-                        LINE_Transport_WriteResponse(outSize, outData, checksum);
+                    else if(ch->currentResponding) {
+                        ch->currentState = protocol_state_wait_size;
+                        LINE_Transport_WriteResponse(channel, ch->outSize, ch->txBuffer, checksum);
                     }
                 }
                 else {
-                    // TODO: do we timeout here? or let the network take it's own course, timeout via update function
-                    currentState = protocol_state_wait_size;
+                    ch->currentState = protocol_state_wait_size;
                 }
             }
             else {
-                currentState = protocol_state_wait_size;
+                ch->currentState = protocol_state_wait_size;
             }
         }
         else {
-            currentState = protocol_state_wait_sync;
-            LINE_Transport_OnError(false, currentRequest, line_transport_error_header_invalid);
+            ch->currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(channel, false, ch->currentRequest, line_transport_error_header_invalid);
         }
     }
-    else if(currentState == protocol_state_wait_size) {
-        currentSize = data;
-        currentSizeCounter = 0;
-        calculatedChecksum = data + LINE_DATA_CHECKSUM_OFFSET;
+    else if(ch->currentState == protocol_state_wait_size) {
+        ch->currentSize = data;
+        ch->currentSizeCounter = 0;
+        ch->calculatedChecksum = data + LINE_DATA_CHECKSUM_OFFSET;
 
-        if(currentSize == 0) {
-            currentState = protocol_state_wait_data_checksum;
+        if(ch->currentSize == 0) {
+            ch->currentState = protocol_state_wait_data_checksum;
         }
         else {
-            currentState = protocol_state_wait_data;
+            ch->currentState = protocol_state_wait_data;
         }
     }
-    else if(currentState == protocol_state_wait_data) {
-        dataBuffer[currentSizeCounter] = data;
-        calculatedChecksum += data;
-        currentSizeCounter++;
+    else if(ch->currentState == protocol_state_wait_data) {
+        if (ch->currentSizeCounter <= LINE_TRANSPORT_RX_BUFFER_SIZE) {
+            ch->rxBuffer[ch->currentSizeCounter] = data;
+            ch->calculatedChecksum += data;
+            ch->currentSizeCounter++;
+        }
 
-        if (currentSizeCounter >= currentSize) {
-            currentState = protocol_state_wait_data_checksum;
+        if (ch->currentSizeCounter >= ch->currentSize) {
+            ch->currentState = protocol_state_wait_data_checksum;
         }
     }
-    else if(currentState == protocol_state_wait_data_checksum) {
+    else if(ch->currentState == protocol_state_wait_data_checksum) {
         uint8_t checksum = data;
 
-        // if check
-        if (checksum == calculatedChecksum) {
-            // TODO: call with null pointer if no data was sent
-            currentState = protocol_state_wait_sync;
-            LINE_Transport_OnData(currentResponding, currentRequest, currentSize, dataBuffer);
+        if (checksum == ch->calculatedChecksum) {
+            ch->currentState = protocol_state_wait_sync;
+            LINE_Transport_OnData(channel, ch->currentResponding, ch->currentRequest, ch->currentSize, ch->rxBuffer);
         }
         else {
-            currentState = protocol_state_wait_sync;
-            LINE_Transport_OnError(currentResponding, currentRequest, line_transport_error_data_invalid);
+            ch->currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(channel, ch->currentResponding, ch->currentRequest, line_transport_error_data_invalid);
         }
     }
 }
 
-void LINE_Transport_Request(uint16_t request) {
-    if (currentState != protocol_state_wait_sync) {
-        // Rejecting send while the bus active
+void LINE_Transport_Request(uint8_t channel, uint16_t request) {
+    if (channel >= LINE_TRANSPORT_CHANNEL_COUNT) return;
+    channel_state *ch = &channels[channel];
+    if (ch->currentState != protocol_state_wait_sync) {
         return;
     }
 
-    LINE_Transport_WriteRequest(request_code(request));
+    LINE_Transport_WriteRequest(channel, request_code(request));
 
-    if (!isOneWire) {
-        currentState = protocol_state_wait_size;
+    if (!ch->isOneWire) {
+        ch->currentState = protocol_state_wait_size;
     }
 }
 
-static void _no_handler1(bool response, uint16_t request, line_transport_error error_type) {
+static void _no_handler1(uint8_t channel, bool response, uint16_t request, line_transport_error error_type) {
     // Empty function for not implemented callbacks
 }
 
-void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) __attribute__((weak, alias("_no_handler1")));
+void LINE_Transport_OnError(uint8_t channel, bool response, uint16_t request, line_transport_error error_type) __attribute__((weak, alias("_no_handler1")));
 
-static void _no_handler2(bool response, uint16_t request, uint8_t size, uint8_t* payload) {
+static void _no_handler2(uint8_t channel, bool response, uint16_t request, uint8_t size, uint8_t* payload) {
     // Empty function for not implemented callbacks
 }
 
-void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_t* payload) __attribute__((weak, alias("_no_handler2")));
+void LINE_Transport_OnData(uint8_t channel, bool response, uint16_t request, uint8_t size, uint8_t* payload) __attribute__((weak, alias("_no_handler2")));
