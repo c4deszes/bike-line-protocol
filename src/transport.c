@@ -137,7 +137,7 @@ void LINE_Transport_Receive(uint8_t channel, uint8_t data) {
         }
     }
     else if(ch->currentState == protocol_state_wait_data) {
-        if (ch->currentSizeCounter <= LINE_TRANSPORT_RX_BUFFER_SIZE) {
+        if (ch->currentSize <= LINE_TRANSPORT_RX_BUFFER_SIZE) {
             ch->rxBuffer[ch->currentSizeCounter] = data;
             ch->calculatedChecksum += data;
             ch->currentSizeCounter++;
@@ -150,7 +150,11 @@ void LINE_Transport_Receive(uint8_t channel, uint8_t data) {
     else if(ch->currentState == protocol_state_wait_data_checksum) {
         uint8_t checksum = data;
 
-        if (checksum == ch->calculatedChecksum) {
+        if (ch->currentSize > LINE_TRANSPORT_RX_BUFFER_SIZE) {
+            ch->currentState = protocol_state_wait_sync;
+            LINE_Transport_OnError(channel, ch->currentResponding, ch->currentRequest, line_transport_error_partial_data);
+        }
+        else if (checksum == ch->calculatedChecksum) {
             ch->currentState = protocol_state_wait_sync;
             LINE_Transport_OnData(channel, ch->currentResponding, ch->currentRequest, ch->currentSize, ch->rxBuffer);
         }
