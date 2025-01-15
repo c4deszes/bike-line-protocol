@@ -7,8 +7,7 @@ if TYPE_CHECKING:
 
 class Network:
 
-    def __init__(self, name: str) -> None:
-        self.name = name
+    def __init__(self) -> None:
         self.baudrate: int = 0
         self.nodes = []
         self.requests = []

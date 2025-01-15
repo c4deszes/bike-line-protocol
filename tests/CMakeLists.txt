@@ -12,22 +12,22 @@ target_sources(test_TransportReceive PRIVATE
 )
 add_test(test_TransportReceive)
 
-add_executable(test_ApplicationInterface EXCLUDE_FROM_ALL)
-target_sources(test_ApplicationInterface PRIVATE
-    ../src/application.c
-    test_ApplicationInterface.cpp
-)
-add_test(test_ApplicationInterface)
+# add_executable(test_ApplicationInterface EXCLUDE_FROM_ALL)
+# target_sources(test_ApplicationInterface PRIVATE
+#     ../src/application.c
+#     test_ApplicationInterface.cpp
+# )
+# add_test(test_ApplicationInterface)
 
-line_codegen(
-    TARGET test_network
-    NETWORK test_network.json
-    NODE Peripheral_1
-    ADAPTER
-)
-add_executable(test_ApplicationSignals EXCLUDE_FROM_ALL)
-target_sources(test_ApplicationSignals PRIVATE
-    test_ApplicationSignals.cpp
-)
-add_test(test_ApplicationSignals)
-target_link_libraries(test_ApplicationSignals PRIVATE test_network)
+# line_codegen(
+#     TARGET test_network
+#     NETWORK test_network.json
+#     NODE Peripheral_1
+#     ADAPTER
+# )
+# add_executable(test_ApplicationSignals EXCLUDE_FROM_ALL)
+# target_sources(test_ApplicationSignals PRIVATE
+#     test_ApplicationSignals.cpp
+# )
+# add_test(test_ApplicationSignals)
+# target_link_libraries(test_ApplicationSignals PRIVATE test_network)

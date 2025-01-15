@@ -40,7 +40,7 @@ def load_network(path: str) -> Network:
     with open(path, 'r') as f:
         data = json.load(f)
 
-    network = Network(data['name'])
+    network = Network()
     network.baudrate = data['baudrate']
 
     for (name, enc) in data['encoders'].items():
