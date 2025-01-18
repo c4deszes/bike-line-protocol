@@ -29,12 +29,12 @@ static uint16_t request_code(uint16_t data) {
     return (((parity1 << 1) | parity2) << LINE_REQUEST_PARITY_POS) | data;
 }
 
-static uint8_t calculate_checksum(uint8_t* data, size_t size) {
+static uint8_t calculate_checksum(uint8_t* data, uint8_t size) {
     uint8_t checksum = size;
     for (int i = 0; i < size; i++) {
         checksum += data[i];
     }
-    checksum += 0xA3;
+    checksum += LINE_DATA_CHECKSUM_OFFSET;
     return checksum;
 }
 

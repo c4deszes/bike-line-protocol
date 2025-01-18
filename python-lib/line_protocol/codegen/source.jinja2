@@ -24,7 +24,7 @@ bool LINE_Request_{{request.name}}_flag_internal;
 
 void LINE_App_Init(void) {
     {% for channel in channels %}
-    LINE_Transport_Init({{channel.channel}}, {{channel.one_wire}});
+    LINE_Transport_Init({{channel.channel}}, {{'true' if channel.one_wire else 'false'}});
     {% endfor %}
 }
 
