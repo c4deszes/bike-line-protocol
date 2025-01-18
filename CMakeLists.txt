@@ -15,7 +15,6 @@ target_include_directories(line-protocol-api INTERFACE
 add_library(line-protocol-sources INTERFACE)
 target_sources(line-protocol-sources INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/transport.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/application.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.c
 )
 
