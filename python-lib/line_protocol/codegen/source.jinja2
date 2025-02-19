@@ -29,10 +29,10 @@ bool LINE_Request_{{request.name}}_flag_internal;
 static LINE_Diag_Config_t LINE_DiagConfig_{{channel.name}}_{{node.node.name}} = {
     .transport_channel = {{channel}},
 
-    {% if diag_settings.initAddress is boolean %}
-    .initAddress = {{ node.node.address if diag_settings.initAddress else 'LINE_DIAG_UNICAST_UNASSIGNED_ID' }},
-    {% else diag_settings.initAddress %}
-    .initAddress = {{ diag_settings.initAddress }},
+    {% if node.diagnostics.initAddress is boolean %}
+    .initAddress = {{ node.node.address if node.diagnostics.initAddress else 'LINE_DIAG_UNICAST_UNASSIGNED_ID' }},
+    {% else node.diagnostics.initAddress %}
+    .initAddress = {{ node.diagnostics.initAddress }},
     {% endif %}
 
     on_wakeup = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnWakeup,
