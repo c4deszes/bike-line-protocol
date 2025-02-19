@@ -1,5 +1,5 @@
 from .request import Request
-from typing import List
+from typing import List, Union
 
 class Node:
 
@@ -8,3 +8,6 @@ class Node:
         self.address = address
         self.publishes: List[Request] = []
         self.subscribes: List[Request] = []
+
+    def is_publishing(self, request: Union[int, str]) -> bool:
+        return any([a.id == request or a.name == request for a in self.publishes])

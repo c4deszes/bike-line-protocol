@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+from typing import Union
 from dataclasses import dataclass
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -16,9 +17,16 @@ class Channel:
     nodes: list[Node]
 
 @dataclass
+class DiagnosticSettings:
+    diag_channel: int
+    enabled: bool
+    initAddress: Union[int, bool]
+
+@dataclass
 class NodeSettings:
     node: Node
     enabled: bool
+    diag_settings: DiagnosticSettings
 
 def codegen(channels: list[Node], output_path: str):
     env = Environment(
@@ -54,6 +62,11 @@ def main():
             for node_name, node_props in props['nodes'].items():
                 nodes.append(NodeSettings(
                     node=network.get_node(node_name),
+                    diag_settings=DiagnosticSettings(
+                        diag_channel=int(node_props['channel']),
+                        enabled=bool(node_props['enabled']),
+                        initAddress=node_props['initAddress']
+                    ),
                     enabled=bool(node_props['enabled'])
                 ))
 

@@ -89,9 +89,9 @@ bool LINE_Diag_PrepareResponse(uint8_t transport_channel, uint16_t request, uint
                 }
                 else {
                     *size = sizeof(LINE_Diag_PowerStatus_t);
-                    payload[0] = status->U_status;
-                    payload[1] = status->BOD_status;
-                    payload[2] = status->I_operating;
+                    payload[0] = status->U_measured;
+                    payload[1] = (status->I_operating) & 0xFF;
+                    payload[2] = (status->I_operating) >> 8;
                     payload[3] = status->I_sleep;
                     return true;
                 }

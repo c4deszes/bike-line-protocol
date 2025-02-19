@@ -17,7 +17,7 @@ class RequestScheduleEntry():
         self.request = request
 
     def perform(self, master: 'LineMaster'):
-        master.request_data(self.request.name)
+        master.request(self.request.name)
     
 class WakeupScheduleEntry():
 

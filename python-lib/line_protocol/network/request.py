@@ -60,6 +60,8 @@ class FormulaEncoder(SignalEncoder):
         self.offset = offset
 
     def encode(self, value: float) -> int:
+        if isinstance(value, str):
+            value = float(value)
         return int((value - self.offset) / self.scale)
     
     def decode(self, value: int) -> float:

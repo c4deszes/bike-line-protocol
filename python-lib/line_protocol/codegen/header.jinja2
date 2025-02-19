@@ -10,8 +10,17 @@
 
 {% for node in channel.nodes %}
 
-{%- if node.diagnostics %}
+{% if diag_settings.enabled %}
 #define LINE_NODE_{{node.node.name}}_DIAG_ADDRESS 0x{{'%01X' % node.node.address}}
+void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnWakeup(void);
+void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnIdle(void);
+void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnShutdown(void);
+void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address);
+
+uint8_t LINE_Diag_{{channel.name}}_{{node.node.name}}_GetOperationStatus(void);
+LINE_Diag_PowerStatus_t* LINE_Diag_{{channel.name}}_{{node.node.name}}_GetPowerStatus(void);
+uint32_t LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSerialNumber(void);
+LINE_Diag_SoftwareVersion_t* LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSoftwareVersion(void);
 {% endif %}
 
 /* Published frames */

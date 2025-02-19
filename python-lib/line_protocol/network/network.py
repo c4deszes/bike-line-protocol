@@ -9,6 +9,7 @@ class Network:
 
     def __init__(self) -> None:
         self.baudrate: int = 0
+        self.master: Node = None
         self.nodes = []
         self.requests = []
         self.encoders = []

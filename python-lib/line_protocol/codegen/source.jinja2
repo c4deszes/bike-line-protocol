@@ -1,5 +1,6 @@
 #include "line_transport.h"
 #include "line_application.h"
+#include "line_diagnostics.h"
 #include "line_api.h"
 
 {% for channel in channels %}
@@ -22,9 +23,40 @@ bool LINE_Request_{{request.name}}_flag_internal;
 {% endfor %}
 {% endfor %}
 
+{% for channel in channels %}
+{% for node in channel.nodes %}
+    {% if node.diagnostics.enabled %}
+static LINE_Diag_Config_t LINE_DiagConfig_{{channel.name}}_{{node.node.name}} = {
+    .transport_channel = {{channel}},
+
+    {% if diag_settings.initAddress is boolean %}
+    .initAddress = {{ node.node.address if diag_settings.initAddress else 'LINE_DIAG_UNICAST_UNASSIGNED_ID' }},
+    {% else diag_settings.initAddress %}
+    .initAddress = {{ diag_settings.initAddress }},
+    {% endif %}
+
+    on_wakeup = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnWakeup,
+    on_idle = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnIdle,
+    on_shutdown = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnShutdown,
+    on_conditional_change_address = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnConditionalChangeAddress,
+
+    op_status = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetOperationStatus,
+    power_status = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetPowerStatus,
+    serial_number = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSerialNumber,
+    software_version = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSoftwareVersion,
+};
+    {% endif %}
+{% endfor %}
+{% endfor %}
+
 void LINE_App_Init(void) {
     {% for channel in channels %}
     LINE_Transport_Init({{channel.channel}}, {{'true' if channel.one_wire else 'false'}});
+    {% for node in channel.nodes %}
+    {% if node.diagnostics.enabled %}
+    LINE_Diag_Init({{node.diagnostics.diag_channel}}, &LINE_DiagConfig_{{channel.name}}_{{node.node.name}});
+    {% endif %}
+    {% endfor %}
     {% endfor %}
 }
 
@@ -34,7 +66,7 @@ void LINE_App_OnRequest(uint8_t channel, uint16_t request, uint8_t size, uint8_t
     {% for request in node.node.subscribes %}
     #ifndef LINE_REQUEST_{{request.name}}_ONREQUEST_HANDLED
     #define LINE_REQUEST_{{request.name}}_ONREQUEST_HANDLED
-    if (request == LINE_REQUEST_{{request.name}}_ID) {
+    if (channel == LINE_CHANNEL_{{channel.name}} && request == LINE_REQUEST_{{request.name}}_ID) {
         // TODO: reject request if size doesn't equal the request size
         for (int i = 0; i < LINE_REQUEST_{{request.name}}_SIZE; i++) {
             LINE_Request_{{request.name}}_data.data[i] = payload[i];

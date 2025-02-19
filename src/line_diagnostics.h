@@ -51,19 +51,14 @@ extern "C"
 #define LINE_DIAG_OP_STATUS_BOOT 0x40
 #define LINE_DIAG_OP_STATUS_BOOT_ERROR 0x41
 
-#define LINE_DIAG_POWER_STATUS_VOLTAGE_OK 0
-#define LINE_DIAG_POWER_STATUS_VOLTAGE_LOW 1
-#define LINE_DIAG_POWER_STATUS_VOLTAGE_HIGH 2
-#define LINE_DIAG_POWER_STATUS_BOD_NONE 0
-#define LINE_DIAG_POWER_STATUS_BOD_DETECTED 1
+#define LINE_DIAG_POWER_STATUS_VOLTAGE()
 #define LINE_DIAG_POWER_STATUS_OP_CURRENT(millis) (millis / 25)
 #define LINE_DIAG_POWER_STATUS_SLEEP_CURRENT(micros) (micros / 10)
 
 // TODO: change this, current to mA resolution, U_Status into u_volts, remove bod_status
 typedef struct {
-    uint8_t U_status;
-    uint8_t BOD_status;
-    uint8_t I_operating;
+    uint8_t U_measured;
+    uint16_t I_operating;
     uint8_t I_sleep;
 } LINE_Diag_PowerStatus_t;
 

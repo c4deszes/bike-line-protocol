@@ -69,6 +69,8 @@ def load_network(path: str) -> Network:
         node.subscribes = [network.get_request(x) for x in nod['subscribes']]
         network.nodes.append(node)
 
+    network.master = network.get_node(data['master'])
+
     schedules = load_schedules(network, data['schedules'])
     network.schedules += schedules
 
