@@ -63,9 +63,9 @@ def main():
                 nodes.append(NodeSettings(
                     node=network.get_node(node_name),
                     diag_settings=DiagnosticSettings(
-                        diag_channel=int(node_props['channel']),
-                        enabled=bool(node_props['enabled']),
-                        initAddress=node_props['initAddress']
+                        diag_channel=int(node_props["diagnostics"]['channel']),
+                        enabled=bool(node_props["diagnostics"]['enabled']),
+                        initAddress=node_props["diagnostics"]['initAddress']
                     ),
                     enabled=bool(node_props['enabled'])
                 ))
