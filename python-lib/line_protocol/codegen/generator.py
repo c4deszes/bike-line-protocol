@@ -26,7 +26,7 @@ class DiagnosticSettings:
 class NodeSettings:
     node: Node
     enabled: bool
-    diag_settings: DiagnosticSettings
+    diagnostics: DiagnosticSettings
 
 def codegen(channels: list[Node], output_path: str):
     env = Environment(
@@ -62,7 +62,7 @@ def main():
             for node_name, node_props in props['nodes'].items():
                 nodes.append(NodeSettings(
                     node=network.get_node(node_name),
-                    diag_settings=DiagnosticSettings(
+                    diagnostics=DiagnosticSettings(
                         diag_channel=int(node_props["diagnostics"]['channel']),
                         enabled=bool(node_props["diagnostics"]['enabled']),
                         initAddress=node_props["diagnostics"]['initAddress']
