@@ -82,6 +82,8 @@ void LINE_App_OnRequest(uint8_t channel, uint16_t request, uint8_t size, uint8_t
     {% endfor %}
     {% endfor %}
     {% endfor %}
+
+    LINE_Diag_OnRequest(channel, request, size, payload);
 }
 
 bool LINE_App_RespondsTo(uint8_t channel, uint16_t request) {
@@ -94,7 +96,7 @@ bool LINE_App_RespondsTo(uint8_t channel, uint16_t request) {
     {% endfor %}
     {% endfor %}
     {% endfor %}
-    return false;
+    return LINE_Diag_RespondsTo(channel, request);
 }
 
 bool LINE_App_PrepareResponse(uint8_t channel, uint16_t request, uint8_t* size, uint8_t* payload) {
@@ -115,7 +117,8 @@ bool LINE_App_PrepareResponse(uint8_t channel, uint16_t request, uint8_t* size, 
     {% endfor %}
     {% endfor %}
     {% endfor %}
-    return false;
+    
+    return LINE_Diag_PrepareResponse(channel, request, size, payload);
 }
 
 {% for channel in channels %}
