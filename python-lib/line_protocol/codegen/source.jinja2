@@ -31,7 +31,7 @@ static LINE_Diag_Config_t LINE_DiagConfig_{{channel.name}}_{{node.node.name}} = 
 
     {% if node.diagnostics.initAddress is boolean %}
     .initAddress = {{ node.node.address if node.diagnostics.initAddress else 'LINE_DIAG_UNICAST_UNASSIGNED_ID' }},
-    {% else node.diagnostics.initAddress %}
+    {% else %}
     .initAddress = {{ node.diagnostics.initAddress }},
     {% endif %}
 
