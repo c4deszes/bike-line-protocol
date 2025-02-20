@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "line_diagnostics.h"
+
 {% for channel in channels %}
 #define LINE_CHANNEL_{{channel.name}} {{channel.channel}}
 #define LINE_NETWORK_{{channel.name}}_BAUDRATE {{channel.network.baudrate}}

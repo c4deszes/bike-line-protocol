@@ -181,7 +181,7 @@ void LINE_Diag_OnRequest(uint8_t transport_channel, uint16_t request, uint8_t si
                 }
             }
             else if (assignedAddress != LINE_DIAG_UNICAST_UNASSIGNED_ID) {
-                for (int j = 0; j < diagServiceListenerIndex; j++) {
+                for (int j = 0; j < diagServiceListenerIndex[i]; j++) {
                     if (request == LINE_DIAG_UNICAST_ID(diagServiceListeners[i][j].request, assignedAddress)) {
                         diagServiceListeners[i][j].callback(request, size, payload);
                         break;
