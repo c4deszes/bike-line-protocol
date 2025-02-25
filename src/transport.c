@@ -179,6 +179,13 @@ void LINE_Transport_Request(uint8_t channel, uint16_t request) {
     }
 }
 
+
+static void _no_handler(uint8_t channel, uint16_t request) {
+    // Empty function for not implemented callbacks
+}
+
+void LINE_Transport_WriteRequest(uint8_t channel, uint16_t request) __attribute__((weak, alias("_no_handler")));
+
 static void _no_handler1(uint8_t channel, bool response, uint16_t request, line_transport_error error_type) {
     // Empty function for not implemented callbacks
 }
