@@ -51,7 +51,7 @@ extern "C"
 #define LINE_DIAG_OP_STATUS_BOOT 0x40
 #define LINE_DIAG_OP_STATUS_BOOT_ERROR 0x41
 
-#define LINE_DIAG_POWER_STATUS_VOLTAGE(millis) (voltage/100)
+#define LINE_DIAG_POWER_STATUS_VOLTAGE(millis) (millis/100)
 #define LINE_DIAG_POWER_STATUS_OP_CURRENT(millis) (millis)
 #define LINE_DIAG_POWER_STATUS_SLEEP_CURRENT(micros) (micros / 10)
 
