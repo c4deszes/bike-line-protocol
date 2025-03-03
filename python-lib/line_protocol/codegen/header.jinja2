@@ -1,6 +1,11 @@
 #ifndef LINE_PROTOCOL_APP_GEN_H_
 #define LINE_PROTOCOL_APP_GEN_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -119,5 +124,9 @@ bool LINE_Request_{{request.name}}_flag(void);
 {% endfor %}
 
 {% endfor %}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
