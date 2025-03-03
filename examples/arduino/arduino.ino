@@ -14,16 +14,16 @@ LINE_Diag_PowerStatus_t power_status = {
   .I_sleep = LINE_DIAG_POWER_STATUS_SLEEP_CURRENT(100)    // 100uA
 };
 
-uint8_t LINE_Diag_Network_RearLight_GetOperationStatus(void) {
+uint8_t LINE_Diag_Network_Arduino_GetOperationStatus(void) {
   return LINE_DIAG_OP_STATUS_OK;
 }
-LINE_Diag_PowerStatus_t* LINE_Diag_Network_RearLight_GetPowerStatus(void) {
+LINE_Diag_PowerStatus_t* LINE_Diag_Network_Arduino_GetPowerStatus(void) {
   return &power_status;
 }
-uint32_t LINE_Diag_Network_RearLight_GetSerialNumber(void) {
+uint32_t LINE_Diag_Network_Arduino_GetSerialNumber(void) {
   return 0xDEADBEEF;
 }
-LINE_Diag_SoftwareVersion_t* LINE_Diag_Network_RearLight_GetSoftwareVersion(void) {
+LINE_Diag_SoftwareVersion_t* LINE_Diag_Network_Arduino_GetSoftwareVersion(void) {
   return &sw_version;
 }
 
