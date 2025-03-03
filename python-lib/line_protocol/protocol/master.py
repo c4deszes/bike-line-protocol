@@ -79,6 +79,7 @@ class LineMaster():
         for request in self.network.master.publishes:
             self.master_frames[request.id] = MasterFrame(request)
 
+        # TODO: only have subscribed requests here?
         self.peripheral_frames = {}
         for request in self.network.requests:
             if request not in self.network.master.publishes:

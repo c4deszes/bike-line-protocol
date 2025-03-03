@@ -86,6 +86,7 @@ bool LINE_Transport_PrepareResponse(uint8_t channel, uint16_t request, uint8_t* 
  */
 void LINE_Transport_WriteResponse(uint8_t channel, uint8_t size, uint8_t* payload, uint8_t checksum);
 
+// TODO: rename this function
 void LINE_Transport_Request(uint8_t channel, uint16_t request);
 
 /**
