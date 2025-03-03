@@ -56,7 +56,7 @@ def main():
         channels = []
 
         for (name, props) in config_data.items():
-            network = load_network(props['network'])
+            network = load_network(os.path.join(os.path.dirname(args.config), props['network']))
             nodes = []
 
             for node_name, node_props in props['nodes'].items():

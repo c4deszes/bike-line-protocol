@@ -1,0 +1,17 @@
+{
+    "Network": {
+        "channel": 0,
+        "oneWire": true,
+        "network": "network-1.json",
+        "nodes": {
+            "RotorSensor": {
+                "enabled": true,
+                "diagnostics": {
+                    "channel": 0,
+                    "enabled": true,
+                    "initAddress": true
+                }
+            }
+        }
+    }
+}

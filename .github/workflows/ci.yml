@@ -49,7 +49,7 @@ jobs:
 
       - name: Generate code
         working-directory: examples/arduino
-        run: python -m line_protocol.codegen network.json --node Arduino --output .
+        run: python -m line_protocol.codegen codegen.json --output .
 
       - name: Build sketch
         working-directory: examples/arduino
