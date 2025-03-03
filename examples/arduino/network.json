@@ -1,6 +1,7 @@
 {
     "name": "test-network",
     "baudrate": 19200,
+    "master": "Main",
     "nodes": {
         "Main": {
             "address": "0x0",
