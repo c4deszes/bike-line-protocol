@@ -213,11 +213,15 @@ class LineSerialTransport():
 
         if self.one_wire:
             received = 0
+            start = time.time()
             # TODO: timeout to prevent infinite loop
             while received < len(header):
                 data = self._serial.read(1)
                 if len(data) == 1:
                     received += 1
+                if time.time() - start > 1.0:
+                    logger.error('RX No self response received!')
+                    raise LineTransportTimeout("Self response timeout.")
 
         start = time.time()
         size = None

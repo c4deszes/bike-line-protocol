@@ -9,38 +9,35 @@ LINE_Diag_SoftwareVersion_t sw_version = {
 };
 
 LINE_Diag_PowerStatus_t power_status = {
-  .U_status = LINE_DIAG_POWER_STATUS_VOLTAGE_OK,
-  .BOD_status = LINE_DIAG_POWER_STATUS_BOD_NONE,
+  .U_measured = LINE_DIAG_POWER_STATUS_VOLTAGE(12000),    // 12V
   .I_operating = LINE_DIAG_POWER_STATUS_OP_CURRENT(100),  // 100mA
-  .I_sleep = LINE_DIAG_POWER_STATUS_SLEEP_CURRENT(20)    // 20uA
+  .I_sleep = LINE_DIAG_POWER_STATUS_SLEEP_CURRENT(100)    // 100uA
 };
 
-uint8_t LINE_Diag_GetOperationStatus(void) {
+uint8_t LINE_Diag_Network_Arduino_GetOperationStatus(void) {
   return LINE_DIAG_OP_STATUS_OK;
 }
-
-LINE_Diag_PowerStatus_t* LINE_Diag_GetPowerStatus(void) {
+LINE_Diag_PowerStatus_t* LINE_Diag_Network_Arduino_GetPowerStatus(void) {
   return &power_status;
 }
-
-uint32_t LINE_Diag_GetSerialNumber(void) {
+uint32_t LINE_Diag_Network_Arduino_GetSerialNumber(void) {
   return 0xDEADBEEF;
 }
-
-LINE_Diag_SoftwareVersion_t* LINE_Diag_GetSoftwareVersion(void) {
+LINE_Diag_SoftwareVersion_t* LINE_Diag_Network_Arduino_GetSoftwareVersion(void) {
   return &sw_version;
 }
 
-void LINE_Diag_OnWakeup(void) {
-  Serial.println("Waking up.");
+void LINE_Diag_Network_Arduino_OnWakeup(void) {
+  Serial.println("Wakeup.");
 }
-
-void LINE_Diag_OnSleep(void) {
-  Serial.println("Going to sleep.");
+void LINE_Diag_Network_Arduino_OnIdle(void) {
+  Serial.println("Go to idle.");
 }
-
-void LINE_Diag_OnShutdown(void) {
+void LINE_Diag_Network_Arduino_OnShutdown(void) {
   Serial.println("Shutting down.");
+}
+void LINE_Diag_Network_Arduino_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address) {
+
 }
 
 void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) {
@@ -58,7 +55,7 @@ void LINE_Transport_OnError(bool response, uint16_t request, line_transport_erro
   }
 }
 
-void LINE_Transport_WriteResponse(uint8_t size, uint8_t* payload, uint8_t checksum) {
+void LINE_Transport_WriteResponse(uint8_t channel, uint8_t size, uint8_t* payload, uint8_t checksum) {
   Serial1.write(size);
   for (int i=0;i<size;i++) {
     Serial1.write(payload[i]);
@@ -75,8 +72,6 @@ void setup() {
   Serial1.begin(19200);
 
   LINE_App_Init();
-  LINE_Diag_SetAddress(0x4);
-  LINE_Transport_Init(true);
 
   pinMode(8, OUTPUT);
   Serial.println("Initialized.");
@@ -90,12 +85,12 @@ void loop() {
     Serial.print("Received: ");
     Serial.print(data, HEX);
     Serial.println();
-    LINE_Transport_Receive(data);
+    LINE_Transport_Receive(0, data);
   }
   uint32_t currentTime = millis();
   uint32_t diff = currentTime - transport_timer;
   if (diff >= 1) {
-    LINE_Transport_Update(diff);
+    LINE_Transport_Update(0, diff);
     transport_timer = currentTime;
   }
 

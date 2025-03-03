@@ -40,7 +40,7 @@ def load_network(path: str) -> Network:
     with open(path, 'r') as f:
         data = json.load(f)
 
-    network = Network(data['name'])
+    network = Network()
     network.baudrate = data['baudrate']
 
     for (name, enc) in data['encoders'].items():
@@ -68,6 +68,8 @@ def load_network(path: str) -> Network:
         node.publishes = [network.get_request(x) for x in nod['publishes']]
         node.subscribes = [network.get_request(x) for x in nod['subscribes']]
         network.nodes.append(node)
+
+    network.master = network.get_node(data['master'])
 
     schedules = load_schedules(network, data['schedules'])
     network.schedules += schedules

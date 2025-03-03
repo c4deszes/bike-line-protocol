@@ -15,7 +15,6 @@ target_include_directories(line-protocol-api INTERFACE
 add_library(line-protocol-sources INTERFACE)
 target_sources(line-protocol-sources INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/transport.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/application.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.c
 )
 
@@ -29,7 +28,7 @@ function(line_codegen)
 cmake_parse_arguments(
     ""
     "ADAPTER"
-    "TARGET;NETWORK;NODE"
+    "TARGET;CONFIG"
     ""
     ${ARGN}
 )
@@ -37,7 +36,7 @@ cmake_parse_arguments(
     set(line_codegen_dir ${CMAKE_CURRENT_BINARY_DIR}/${_TARGET}_gencode)
     add_custom_target(
         line-codegen-${_TARGET}
-        COMMAND ${Python_EXECUTABLE} -m line_protocol.codegen ${_NETWORK} --node ${_NODE} --output ${line_codegen_dir}
+        COMMAND ${Python_EXECUTABLE} -m line_protocol.codegen ${_CONFIG} --output ${line_codegen_dir}
         DEPENDS ${_NETWORK}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         BYPRODUCTS ${line_codegen_dir}/line_api.c ${line_codegen_dir}/line_api.h

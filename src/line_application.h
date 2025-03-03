@@ -22,7 +22,7 @@ void LINE_App_Init(void);
  * @param size Payload size
  * @param payload Payload
  */
-void LINE_App_OnRequest(uint16_t request, uint8_t size, uint8_t* payload);
+void LINE_App_OnRequest(uint8_t channel, uint16_t request, uint8_t size, uint8_t* payload);
 
 /**
  * @brief Called externally to determine whether the application intends to respond to a request,
@@ -32,7 +32,7 @@ void LINE_App_OnRequest(uint16_t request, uint8_t size, uint8_t* payload);
  * @return true When the peripheral is responding
  * @return false Otherwise
  */
-bool LINE_App_RespondsTo(uint16_t request);
+bool LINE_App_RespondsTo(uint8_t channel, uint16_t request);
 
 /**
  * @brief Called to prepare the response content for the given request, the function propagates
@@ -44,18 +44,7 @@ bool LINE_App_RespondsTo(uint16_t request);
  * @return true When the response was successfully prepared
  * @return false Otherwise
  */
-bool LINE_App_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
-
-// generated stuff
-void LINE_API_Init(void);
-
-bool LINE_API_RespondsTo(uint16_t request);
-
-bool LINE_API_PrepareResponse(uint16_t request, uint8_t* size, uint8_t* payload);
-
-bool LINE_API_ListensTo(uint16_t request);
-
-void LINE_API_OnRequest(uint16_t request, uint8_t size, uint8_t* payload);
+bool LINE_App_PrepareResponse(uint8_t channel, uint16_t request, uint8_t* size, uint8_t* payload);
 
 #ifdef __cplusplus
 }

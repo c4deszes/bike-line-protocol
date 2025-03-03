@@ -1,26 +1,41 @@
 #ifndef LINE_PROTOCOL_APP_GEN_H_
 #define LINE_PROTOCOL_APP_GEN_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LINE_NETWORK_{{network.name}}_BAUDRATE {{network.baudrate}}
+#include "line_diagnostics.h"
 
-{% for node in network.nodes %}
-#define LINE_NODE_{{node.name}}_DIAG_ADDRESS 0x{{'%01X' % node.address}}
-{% endfor %}
+{% for channel in channels %}
+#define LINE_CHANNEL_{{channel.name}} {{channel.channel}}
+#define LINE_NETWORK_{{channel.name}}_BAUDRATE {{channel.network.baudrate}}
 
-{% for request in node.publishes %}
+{% for node in channel.nodes %}
+
+{% if node.diagnostics.enabled %}
+#define LINE_NODE_{{node.node.name}}_DIAG_ADDRESS 0x{{'%01X' % node.node.address}}
+void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnWakeup(void);
+void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnIdle(void);
+void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnShutdown(void);
+void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address);
+
+uint8_t LINE_Diag_{{channel.name}}_{{node.node.name}}_GetOperationStatus(void);
+LINE_Diag_PowerStatus_t* LINE_Diag_{{channel.name}}_{{node.node.name}}_GetPowerStatus(void);
+uint32_t LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSerialNumber(void);
+LINE_Diag_SoftwareVersion_t* LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSoftwareVersion(void);
+{% endif %}
+
+/* Published frames */
+{%- for request in node.node.publishes %}
+#ifndef LINE_REQUEST_{{request.name}}_ID
 #define LINE_REQUEST_{{request.name}}_ID 0x{{'%04X' % request.id}}
 #define LINE_REQUEST_{{request.name}}_SIZE {{request.size}}
-{% endfor %}
 
-{% for request in node.subscribes %}
-#define LINE_REQUEST_{{request.name}}_ID 0x{{'%04X' % request.id}}
-#define LINE_REQUEST_{{request.name}}_SIZE {{request.size}}
-{% endfor %}
-
-{% for request in node.publishes -%}
 typedef union {
     struct {
     {%- set position = namespace(value=0) -%}
@@ -29,11 +44,11 @@ typedef union {
         unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
         {% endif %}
 
-        {% if signal.width <= 8 %}
+        {%- if signal.width <= 8 %}
         uint8_t {{signal.name}} : {{signal.width}};
-        {% elif signal.width <= 16 %}
+        {%- elif signal.width <= 16 %}
         uint16_t {{signal.name}} : {{signal.width}};
-        {% elif signal.width <= 32 %}
+        {%- elif signal.width <= 32 %}
         uint32_t {{signal.name}} : {{signal.width}};
         {% endif %}
 
@@ -52,13 +67,52 @@ typedef union {
 extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
 
 bool LINE_Request_{{request.name}}_flag(void);
-
-{% for signal in request.signals|sort(attribute='offset') -%}
-#define LINE_SET_{{request.name}}_{{signal.name}}_SIGNAL(value) LINE_{{request.name}}_data.fields.{{signal.name}} = value;
+#endif
 {% endfor %}
-{%- endfor %}
 
-{%- for encoder in network.encoders %}
+/* Subscribed frames */
+{%- for request in node.node.subscribes %}
+#ifndef LINE_REQUEST_{{request.name}}_ID
+#define LINE_REQUEST_{{request.name}}_ID 0x{{'%04X' % request.id}}
+#define LINE_REQUEST_{{request.name}}_SIZE {{request.size}}
+
+typedef union {
+    struct {
+    {%- set position = namespace(value=0) -%}
+    {% for signal in request.signals|sort(attribute='offset') -%}
+        {% if signal.offset > position.value -%}
+        unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
+        {% endif %}
+        
+        {%- if signal.width <= 8 %}
+        uint8_t {{signal.name}} : {{signal.width}};
+        {%- elif signal.width <= 16 %}
+        uint16_t {{signal.name}} : {{signal.width}};
+        {%- elif signal.width <= 32 %}
+        uint32_t {{signal.name}} : {{signal.width}};
+        {% endif %}
+
+        {%- set position.value = position.value + signal.width -%}
+    {%- endfor %}
+    {%- if position.value < request.size * 8 %}
+        unsigned int _end : {{request.size * 8 - position.value}};
+    {%- endif %}
+    } fields;
+    uint8_t data[{{request.size}}];
+} LINE_Frame_{{request.name}}_t;
+
+// TODO: verify union length
+// assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
+
+extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+
+bool LINE_Request_{{request.name}}_flag(void);
+#endif
+{% endfor %}
+
+{% endfor %}
+
+{%- for encoder in channel.network.encoders %}
 {%- if "FormulaEncoder" in encoder.__class__.__name__ %}
 #define LINE_ENCODER_{{encoder.name}}_Encode(value) ((value - {{encoder.offset}}) / {{encoder.scale}})
 #define LINE_ENCODER_{{encoder.name}}_Decode(value) (value * {{encoder.scale}} + {{encoder.offset}})
@@ -69,38 +123,10 @@ bool LINE_Request_{{request.name}}_flag(void);
 {% endif %}
 {% endfor %}
 
-{% for request in node.subscribes -%}
-typedef union {
-    struct {
-    {%- set position = namespace(value=0) -%}
-    {% for signal in request.signals|sort(attribute='offset') -%}
-        {% if signal.offset > position.value -%}
-        unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
-        {% endif %}
-        
-        {% if signal.width <= 8 %}
-        uint8_t {{signal.name}} : {{signal.width}};
-        {% elif signal.width <= 16 %}
-        uint16_t {{signal.name}} : {{signal.width}};
-        {% elif signal.width <= 32 %}
-        uint32_t {{signal.name}} : {{signal.width}};
-        {% endif %}
-
-        {%- set position.value = position.value + signal.width -%}
-    {%- endfor %}
-    {%- if position.value < request.size * 8 %}
-        unsigned int _end : {{request.size * 8 - position.value}};
-    {%- endif %}
-    } fields;
-    uint8_t data[{{request.size}}];
-} LINE_Frame_{{request.name}}_t;
-
-// TODO: verify union length
-// assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
-
-extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
-
-bool LINE_Request_{{request.name}}_flag(void);
 {% endfor %}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

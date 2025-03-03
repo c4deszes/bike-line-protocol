@@ -1,0 +1,17 @@
+{
+    "Network": {
+        "channel": 0,
+        "oneWire": true,
+        "network": "network.json",
+        "nodes": {
+            "Arduino": {
+                "enabled": true,
+                "diagnostics": {
+                    "channel": 0,
+                    "enabled": true,
+                    "initAddress": true
+                }
+            }
+        }
+    }
+}

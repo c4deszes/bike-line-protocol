@@ -1,6 +1,5 @@
-from typing import List
-from .constants import (LINE_SYNC_BYTE, LINE_REQUEST_PARITY_MASK, LINE_REQUEST_PARITY_POS,
-                        LINE_DATA_CHECKSUM_OFFSET)
+from typing import List, Literal
+from .constants import *
 
 def request_code(request: int):
     if request > LINE_REQUEST_PARITY_MASK or request < 0:
@@ -35,3 +34,20 @@ def create_frame(request: int, data: List[int], checksum: int = None) -> bytearr
                       request & 0xFF,
                       len(data)] + data +
                       [checksum])
+
+OperationStatus = Literal['Init', 'Ok', 'Warn', 'Error', 'Boot', 'BootError']
+
+def op_status(status: int) -> OperationStatus:
+    if status == LINE_DIAG_OP_STATUS_INIT:
+        return 'Init'
+    if status == LINE_DIAG_OP_STATUS_OK:
+        return 'Ok'
+    elif status == LINE_DIAG_OP_STATUS_WARN:
+        return 'Earn'
+    elif status == LINE_DIAG_OP_STATUS_ERROR:
+        return 'Error'
+    elif status == LINE_DIAG_OP_STATUS_BOOT:
+        return 'Boot'
+    elif status == LINE_DIAG_OP_STATUS_BOOT_ERROR:
+        return 'BootError'
+    return 'INVALID'

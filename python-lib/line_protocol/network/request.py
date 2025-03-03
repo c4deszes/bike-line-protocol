@@ -60,6 +60,8 @@ class FormulaEncoder(SignalEncoder):
         self.offset = offset
 
     def encode(self, value: float) -> int:
+        if isinstance(value, str):
+            value = float(value)
         return int((value - self.offset) / self.scale)
     
     def decode(self, value: int) -> float:
@@ -82,6 +84,25 @@ class MappingEncoder(SignalEncoder):
     
     def decode(self, value: int) -> str:
         return self.mapping[value]
+
+class TwosComplementEncoder(SignalEncoder):
+    """
+    TwosComplementEncoder is a special encoder for signed integers
+    """
+
+    def __init__(self, name: str, width: int) -> None:
+        super().__init__(name)
+        self.width = width
+
+    def encode(self, value: int) -> int:
+        if value < 0:
+            return (1 << self.width) + value
+        return value
+    
+    def decode(self, value: int) -> int:
+        if value & (1 << (self.width - 1)):
+            return value - (1 << self.width)
+        return value
 
 @dataclass(unsafe_hash=True)
 class Signal():

@@ -28,9 +28,7 @@
             "name": "build-test-targets",
             "hidden": true,
             "targets": [
-                "test_TransportReceive",
-                "test_ApplicationInterface",
-                "test_ApplicationSignals"
+                "test_TransportReceive"
             ]
         },
         {
