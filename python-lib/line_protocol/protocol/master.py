@@ -8,6 +8,9 @@ from .transport import LineSerialTransport
 import time
 from ..network import Network, Request
 from .util import op_status, OperationStatus
+import logging
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class PowerStatus():
@@ -61,6 +64,9 @@ class PeripheralFrame:
         self.request = request
         self.signals = {signal.name: signal.initial for signal in request.signals}
 
+    def __getitem__(self, key: str) -> int:
+        return self.signals[key]
+
 class LineMaster():
 
     def __init__(self, transport: 'LineSerialTransport', network: 'Network' = None) -> None:
@@ -76,16 +82,18 @@ class LineMaster():
     
     def setup(self):
         self.master_frames = {}
-        for request in self.network.master.publishes:
-            self.master_frames[request.id] = MasterFrame(request)
+        if self.network is not None:
+            for request in self.network.master.publishes:
+                self.master_frames[request.id] = MasterFrame(request)
 
         # TODO: only have subscribed requests here?
         self.peripheral_frames = {}
-        for request in self.network.requests:
-            if request not in self.network.master.publishes:
-                self.peripheral_frames[request.id] = PeripheralFrame(request)
+        if self.network is not None:
+            for request in self.network.requests:
+                if request not in self.network.master.publishes:
+                    self.peripheral_frames[request.id] = PeripheralFrame(request)
 
-        self.nodes = [NodeStatus(None, None, None, None) for _ in range(0, LINE_DIAG_UNICAST_BROADCAST_ID-1)]
+        self.nodes = [NodeStatus(None, None, None, None) for _ in range(0, LINE_DIAG_UNICAST_BROADCAST_ID)]
 
     def __enter__(self):
         self.setup()
@@ -112,6 +120,12 @@ class LineMaster():
             self.nodes[request & LINE_DIAG_UNICAST_ID_MASK].serial_number = data[0:3]
         elif (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_SW_NUMBER:
             self.nodes[request & LINE_DIAG_UNICAST_ID_MASK].software_version = f"{data[0]}.{data[1]}.{data[2]}"
+
+        if request in self.peripheral_frames:
+            signals = self.peripheral_frames[request].request.decode(data)
+            logger.debug(f"%s %s", request, signals)
+            for signal, value in signals.items():
+                self.peripheral_frames[request].signals[signal] = value
 
     def run(self):
         while self._running:
