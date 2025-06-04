@@ -4,10 +4,11 @@ from .constants import *
 from threading import Event, Thread
 from queue import Queue, Empty
 from dataclasses import dataclass
-from .transport import LineSerialTransport
+from .transport import LineSerialTransport, LineTransportTimeout
+from .virtual_bus import VirtualBus
 import time
 from ..network import Network, Request
-from .util import op_status, OperationStatus
+from .util import op_status_str, OperationStatus
 import logging
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,19 @@ class PeripheralFrame:
 
     def __getitem__(self, key: str) -> int:
         return self.signals[key]
+    
+class RequestListener:
+
+    def on_request(self, request: Request, signals):
+        raise NotImplementedError()
+    
+    def on_error(self, request: Request, error_type):
+        raise NotImplementedError()
+    
+class NodeStatusListener:
+
+    def on_node_change(self, node: NodeStatus):
+        raise NotImplementedError()
 
 class LineMaster():
 
@@ -79,21 +93,38 @@ class LineMaster():
         self._schedule_thread = None
         self._schedule_running = False
         self._active_schedule = None
-    
-    def setup(self):
-        self.master_frames = {}
-        if self.network is not None:
-            for request in self.network.master.publishes:
-                self.master_frames[request.id] = MasterFrame(request)
 
+        self.request_listeners = []
+        self.node_status_listeners = []
+
+        self.virtual_bus = VirtualBus()
+
+    def setup(self):
         # TODO: only have subscribed requests here?
         self.peripheral_frames = {}
         if self.network is not None:
             for request in self.network.requests:
-                if request not in self.network.master.publishes:
-                    self.peripheral_frames[request.id] = PeripheralFrame(request)
+                self.peripheral_frames[request.id] = PeripheralFrame(request)
 
         self.nodes = [NodeStatus(None, None, None, None) for _ in range(0, LINE_DIAG_UNICAST_BROADCAST_ID)]
+
+    def add_request_listener(self, listener: RequestListener):
+        """
+        Adds a listener for request events. The listener will be called when a request is made.
+
+        :param listener: The listener to add
+        :type listener: RequestListener
+        """
+        self.request_listeners.append(listener)
+
+    def add_node_status_listener(self, listener: NodeStatusListener):
+        """
+        Adds a listener for node status changes. The listener will be called when a node status changes.
+
+        :param listener: The listener to add
+        :type listener: NodeStatusListener
+        """
+        self.node_status_listeners.append(listener)
 
     def __enter__(self):
         self.setup()
@@ -111,19 +142,21 @@ class LineMaster():
 
     def _process_response(self, request: int, data: List[int]) -> None:
         if (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_OP_STATUS:
-            self.nodes[request & LINE_DIAG_UNICAST_ID_MASK].op_status = op_status(data[0])
+            self.nodes[request & LINE_DIAG_UNICAST_ID_MASK].op_status = op_status_str(data[0])
         elif (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_POWER_STATUS:
             # TODO: update format
             pass
             #self.nodes[request & LINE_DIAG_UNICAST_ID_MASK].power_status = PowerStatus(data[0], data[1], data[2])
         elif (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_SERIAL_NUMBER:
-            self.nodes[request & LINE_DIAG_UNICAST_ID_MASK].serial_number = data[0:3]
+            self.nodes[request & LINE_DIAG_UNICAST_ID_MASK].serial_number = int.from_bytes(data[0:3], 'big')
         elif (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_SW_NUMBER:
             self.nodes[request & LINE_DIAG_UNICAST_ID_MASK].software_version = f"{data[0]}.{data[1]}.{data[2]}"
 
         if request in self.peripheral_frames:
             signals = self.peripheral_frames[request].request.decode(data)
             logger.debug(f"%s %s", request, signals)
+            for listener in self.request_listeners:
+                listener.on_request(self.peripheral_frames[request].request, signals)
             for signal, value in signals.items():
                 self.peripheral_frames[request].signals[signal] = value
 
@@ -133,33 +166,54 @@ class LineMaster():
                 event = self._queue.get(timeout=1)
                 if isinstance(event.frame, TxFrame):
                     self.transport.send_data(event.frame.request, event.frame.data, event.frame.checksum)
+                    
+                    # TODO: handle checksum, checksum error, etc.
+                    self.virtual_bus.on_request_complete(event.frame.request, event.frame.data)
+
                     event.event.set()
                 else:
-                    if event.frame.request in self.master_frames:
-                        # TODO: encode raw instead
-                        data = self.master_frames[event.frame.request].request.encode(self.master_frames[event.frame.request].signals)
-                        self.transport.send_data(event.frame.request, data)
+                    # 1st check if virtual bus has any response
+                    #    if yes then encode and send it
+                    #    if no then request data from transport
+
+                    vbus_response = self.virtual_bus.on_request(event.frame.request)
+
+                    if vbus_response is not None:
+                        if self.transport is not None:
+                            self.transport.send_data(event.frame.request, vbus_response)
+                        self._process_response(event.frame.request, vbus_response)
+                        self.virtual_bus.on_request_complete(event.frame.request, vbus_response)
                     else:
                         try:
-                            response = self.transport.request_data(event.frame.request)
-                            event.response = response
-                            self._process_response(event.frame.request, response)
-                            event.timestamp = time.time()
+                            if self.transport is not None:
+                                response = self.transport.request_data(event.frame.request)
+                                event.response = response
+                                self._process_response(event.frame.request, response)
+                                event.timestamp = time.time()
+                                self.virtual_bus.on_request_complete(event.frame.request, response)
+
+                            else:
+                                raise LineTransportTimeout("Transport is not available, no vbus response.")
+
                         except Exception as e:
                             event.exception = e
                             event.timestamp = time.time()
+
+                            # TODO: call with different error types
+                            if event.frame.request in self.peripheral_frames:
+                                for listener in self.request_listeners:
+                                    listener.on_error(self.peripheral_frames[event.frame.request].request, "transport_error")
+                            self.virtual_bus.on_error("transport_error")
                     event.event.set()
             except Empty as exc:
                 pass
 
     def scheduler(self):
-        entry_cnt = 0
         while self._schedule_running:
-            self._active_schedule.entries[entry_cnt].perform(self)
-            time.sleep(self._active_schedule.delay)
-            entry_cnt += 1
-            if entry_cnt >= len(self._active_schedule.entries):
-                entry_cnt = 0
+            entry = self._active_schedule.next()
+            if entry is not None:
+                entry.perform(self)
+            self._active_schedule.wait()
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self._schedule_running:
@@ -176,7 +230,7 @@ class LineMaster():
         if isinstance(schedule, str):
             schedule = self.network.get_schedule(schedule)
         self._schedule_running = True
-        self._active_schedule = schedule
+        self._active_schedule = schedule.create_executor()
         self._schedule_thread = Thread(target=self.scheduler)
         self._schedule_thread.start()
 

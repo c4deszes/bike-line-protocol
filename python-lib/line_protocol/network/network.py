@@ -30,6 +30,21 @@ class Network:
                 return a
         raise LookupError(f'No such node: {name}')
     
+    def get_node_by_address(self, address: int) -> 'Node':
+        """
+        Returns the node with the given address
+
+        :param address: Node address
+        :type address: int
+        :raises LookupError: when no nodes match the address
+        :return: Node
+        :rtype: Node
+        """
+        for a in self.nodes:
+            if a.address == address:
+                return a
+        raise LookupError(f'No such node: {address}')
+    
     def get_nodes(self) -> List['Node']:
         return self.nodes
 

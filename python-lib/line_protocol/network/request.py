@@ -54,10 +54,11 @@ class FormulaEncoder(SignalEncoder):
     Formula encoder takes a physical value and maps it to an integer range
     """
 
-    def __init__(self, name: str, scale: float, offset: float) -> None:
+    def __init__(self, name: str, scale: float, offset: float, unit: str) -> None:
         super().__init__(name)
         self.scale = scale
         self.offset = offset
+        self.unit = unit
 
     def encode(self, value: float) -> int:
         if isinstance(value, str):
@@ -80,10 +81,12 @@ class MappingEncoder(SignalEncoder):
         for (key, val) in self.mapping.items():
             if val == value:
                 return key
-        raise KeyError()
+        raise ValueError(f'{self.name}: Unable to encode {value}')
     
     def decode(self, value: int) -> str:
-        return self.mapping[value]
+        if value in self.mapping:
+            return self.mapping[value]
+        raise ValueError(f'{self.name}: Value {value} is not mapped')
 
 class TwosComplementEncoder(SignalEncoder):
     """
@@ -136,6 +139,9 @@ class Request():
                 return self._to_dict()
 
         self.data_class = RequestData
+
+    def __len__(self):
+        return self.size + 1 + 2 + 1 + 1 # sync, id, size, crc
 
     @staticmethod
     def packer(signals, size):

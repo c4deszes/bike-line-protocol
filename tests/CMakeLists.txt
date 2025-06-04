@@ -5,6 +5,12 @@ function(add_test TARGET)
     gtest_discover_tests(${TARGET} DISCOVERY_MODE POST_BUILD)
 endfunction()
 
+add_custom_target(coverage_report
+    COMMAND ${CMAKE_COMMAND} -E echo "Generating coverage report..."
+    COMMAND ${CMAKE_COMMAND} -E make_directory coverage
+    COMMAND gcovr -r ${CMAKE_SOURCE_DIR} --html --html-details -o coverage/coverage.html
+)
+
 add_executable(test_TransportReceive EXCLUDE_FROM_ALL)
 target_sources(test_TransportReceive PRIVATE
     ../src/transport.c
