@@ -1,10 +1,15 @@
-from .network import Network
-from .request import FormulaEncoder, MappingEncoder, Request, Signal, NoneEncoder, SignalEncoder
-from .nodes import Node
-from typing import List
-from .schedule import ScheduleEntry, Schedule, FixedOrderSchedule, PriorityScheduleEntry, PriorityAgingSchedule, RequestScheduleEntry, WakeupScheduleEntry, IdleScheduleEntry, ShutdownScheduleEntry, GetOperationStatusScheduleEntry, GetPowerStatusScheduleEntry, GetSerialNumberScheduleEntry, GetSoftwareVersionScheduleEntry
-
 import json
+from typing import List
+
+from line_protocol.network.network import Network
+from line_protocol.network.request import (FormulaEncoder, MappingEncoder, Request, Signal,
+                                           NoneEncoder, SignalEncoder)
+from line_protocol.network.nodes import Node
+from line_protocol.network.schedule import (ScheduleEntry, Schedule, FixedOrderSchedule, PriorityScheduleEntry,
+                       PriorityAgingSchedule, RequestScheduleEntry, WakeupScheduleEntry,
+                       IdleScheduleEntry, ShutdownScheduleEntry, GetOperationStatusScheduleEntry,
+                       GetPowerStatusScheduleEntry, GetSerialNumberScheduleEntry,
+                       GetSoftwareVersionScheduleEntry)
 
 def to_int(value: str) -> int:
     if isinstance(value, int):

@@ -94,7 +94,7 @@ class RequestListener:
     occurs. It should implement the on_request and on_error methods.
     """
 
-    def on_user_request(self, timestamp: float, request: Request, signals) -> None:
+    def on_user_request(self, timestamp: float, request: Request, signals: SignalValueContainer) -> None:
         """
         Called when a request is made. The listener should process the request and signals.
 
@@ -103,7 +103,7 @@ class RequestListener:
         :param request: The request that was made
         :type request: Request
         :param signals: Signals that were received with the request
-        :type signals: dict[str, int]
+        :type signals: SignalValueContainer
         """
         raise NotImplementedError()
 
@@ -186,6 +186,14 @@ class LineMaster():
             node.power_status = None
             node.serial_number = None
             node.software_version = None
+
+        # Notify all listeners that the node statuses have been reset
+        for node_id, node_status in self._node_status.items():
+            for listener in self.node_status_listeners:
+                listener.on_node_change(time.time(), NodeRef("Unset", node_id), node_status, NodeStatusProperty.OP_STATUS)
+                listener.on_node_change(time.time(), NodeRef("Unset", node_id), node_status, NodeStatusProperty.POWER_STATUS)
+                listener.on_node_change(time.time(), NodeRef("Unset", node_id), node_status, NodeStatusProperty.SERIAL_NUMBER)
+                listener.on_node_change(time.time(), NodeRef("Unset", node_id), node_status, NodeStatusProperty.SOFTWARE_VERSION)
 
     def add_request_listener(self, listener: RequestListener):
         """
@@ -471,16 +479,15 @@ class LineMaster():
 
         :param request: The request code to send
         :type request: int
-        :param data: _description_
+        :param data: Data to send with the request
         :type data: List[int]
         :param checksum: Checksum value, defaults to None in which case the checksum is calculated
         :type checksum: int, optional
         :param wait: Wait for the transmission to complete, defaults to False
         :type wait: bool, optional
-        :param timeout: _description_, defaults to None
+        :param timeout: Time to wait for a response, defaults to None
         :type timeout: float, optional
         """
-        
         event = self._schedule_frame(TxRequest(request, data, checksum))
         if wait:
             event.event.wait(timeout)

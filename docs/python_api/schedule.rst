@@ -1,6 +1,9 @@
 Schedule
 ========
 
+Common
+------
+
 .. autoclass:: line_protocol.network.schedule.ScheduleEntry
     :members:
 

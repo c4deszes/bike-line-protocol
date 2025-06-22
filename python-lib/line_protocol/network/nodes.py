@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from .request import Request
-from typing import List, Union
+from typing import List
 
 class Node:
 
