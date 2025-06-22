@@ -1,0 +1,90 @@
+{
+    "name": "complex-schedules",
+    "baudrate": 19200,
+    "master": "BodyComputer",
+    "nodes": {
+        "BodyComputer": {
+            "address": "0x00",
+            "subscribes": [
+                "Speed"
+            ],
+            "publishes": [
+                "Light"
+            ]
+        },
+        "Node1": {
+            "address": "0x01",
+            "subscribes": [],
+            "publishes": [
+                "Speed"
+            ]
+        }
+    },
+    "requests": {
+        "Speed": {
+            "id": "0x1000",
+            "size": "2",
+            "layout": {
+                "Value": {
+                    "offset": 0,
+                    "width": 16,
+                    "encoder": "SpeedEncoder"
+                }
+            }
+        },
+        "Light": {
+            "id": "0x1001",
+            "size": "1",
+            "layout": {
+                "Brightness": {
+                    "offset": 0,
+                    "width": 8
+                }
+            }
+        }
+    },
+    "encoders": {
+        "SpeedEncoder": {
+            "type": "formula",
+            "offset": 0,
+            "scale": 0.3921
+        }
+    },
+    "schedules": {
+        "LegacySchedule": {
+            "delay": 0.25,
+            "entries": [
+                {"type": "request", "request": "Speed"},
+                {"type": "request", "request": "Light"}
+            ]
+        },
+        "DiagnosticSchedule": {
+            "delay": 0.25,
+            "entries": [
+                {"type": "opstatus", "node": "Node1"},
+                {"type": "pwrstatus", "node": "Node1"},
+                {"type": "serial", "node": "Node1"},
+                {"type": "swversion", "node": "Node1"}
+            ]
+        },
+        "FixedOrderSchedule": {
+            "type": "fixed",
+            "slots": "variable",
+            "delay": 0.25,
+            "entries": [
+                {"type": "request", "request": "Speed"},
+                {"type": "request", "request": "Light"}
+            ]
+        },
+        "PriorityAgingSchedule": {
+            "type": "priority-aging",
+            "slots": "variable",
+            "delay": 0.25,
+            "phase": "adjusted",
+            "entries": [
+                {"type": "request", "request": "Speed", "cycle": 0, "maxAge": 3},
+                {"type": "request", "request": "Light", "cycle": 1, "maxAge": 3}
+            ]
+        }
+    }
+}

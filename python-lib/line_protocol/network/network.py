@@ -1,19 +1,18 @@
 from typing import Union, List, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .nodes import Node
-    from .request import Request, SignalEncoder
-    from .schedule import Schedule
+from line_protocol.network.request import Request, SignalEncoder, SignalRef
+from line_protocol.network.nodes import Node
+from line_protocol.network.schedule import Schedule
 
 class Network:
 
     def __init__(self) -> None:
         self.baudrate: int = 0
-        self.master: Node = None
+        self.master: Node | None = None
         self.nodes = []
-        self.requests = []
-        self.encoders = []
-        self.schedules = []
+        self.requests: List[Request] = []
+        self.encoders: List[SignalEncoder] = []
+        self.schedules: List[Schedule] = []
 
     def get_node(self, name: str) -> 'Node':
         """
@@ -62,6 +61,21 @@ class Network:
             if a.name == id or a.id == id:
                 return a
         raise LookupError(f'No such request: {id}')
+    
+    def get_signal(self, request: Union[int, str], name: str) -> 'SignalRef':
+        """
+        Returns the signal reference for the given request and signal name.
+
+        :param request: ID or Name of the request
+        :type request: Union[int, str]
+        :param name: Name of the signal
+        :type name: str
+        :return: Signal reference object
+        :rtype: SignalRef
+        """
+        r = self.get_request(request)
+        s = r.get_signal(name)
+        return SignalRef(r, s)
 
     def get_encoder(self, name: str) -> 'SignalEncoder':
         """

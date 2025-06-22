@@ -6,7 +6,9 @@ LINE Protocol
 
     integration
     protocol/index
-    python/index
+    python_tools/index
+    python_api/index
+    c_api/index
     hardware/index
 
 LINE is a bus type protocol that uses a single controller, it's based on the LIN protocol used in

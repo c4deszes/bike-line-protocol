@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(
     line-protocol
-    VERSION "0.1.0"
+    VERSION "0.3.0"
     LANGUAGES C CXX)
 
 option(LINE_PROTOCOL_BUILD_TESTS "Enables library test cases" OFF)
+option(LINE_PROTOCOL_BUILD_DOCS "Enables documentation generation" OFF)
 
 find_package(Python REQUIRED)
 add_library(line-protocol-api INTERFACE)
@@ -81,4 +82,8 @@ if(LINE_PROTOCOL_BUILD_TESTS)
         COMMAND ${Python_EXECUTABLE} -m sphinx -b html -E ${CMAKE_CURRENT_SOURCE_DIR}/docs ${CMAKE_CURRENT_SOURCE_DIR}/docs/_build
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
+endif()
+
+if(LINE_PROTOCOL_BUILD_DOCS)
+    add_subdirectory(docs)
 endif()

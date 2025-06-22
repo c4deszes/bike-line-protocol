@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from .request import Request
 from typing import List, Union
 
@@ -9,5 +10,7 @@ class Node:
         self.publishes: List[Request] = []
         self.subscribes: List[Request] = []
 
-    def is_publishing(self, request: Union[int, str]) -> bool:
-        return any([a.id == request or a.name == request for a in self.publishes])
+@dataclass(unsafe_hash=True)
+class NodeRef:
+    name: str
+    address: int

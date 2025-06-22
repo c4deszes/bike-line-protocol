@@ -1,9 +1,14 @@
+# System imports
 from typing import List
-import serial
-from .util import create_frame, create_header, data_checksum, request_code
 import logging
 import time
-from .constants import *
+
+# Third-party imports
+import serial
+
+# Local imports
+from line_protocol.protocol.util import create_frame, create_header, data_checksum, request_code
+from line_protocol.protocol.constants import *
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +47,7 @@ class LineTransportListener():
     the peripheral interface
     """
 
-    def on_request(self, request: int) -> List[int]:
+    def on_request(self, request: int) -> List[int] | None:
         """Called when a request is received"""
         raise NotImplementedError()
 
@@ -50,17 +55,9 @@ class LineTransportListener():
         """Called when a request has been responded to"""
         raise NotImplementedError()
 
-    def on_error(self, error_type: str):
+    def on_error(self, request: int, error_type: str):
         """Called when an error occurs on the bus (invalid request, bad checksum, timeout)"""
         raise NotImplementedError()
-    
-class LineTransportImpl():
-
-    def listen(self, listener: LineTransportListener):
-        raise NotImplementedError()
-    
-    def request(self, request: int):
-        pass
 
 class LineSerialSniffer():
 
@@ -71,7 +68,7 @@ class LineSerialSniffer():
         self._serial = serial.Serial(None, self.baudrate, timeout=0.00001)
         self.traffic_listeners = []
 
-    def __enter__(self) -> 'LineSerialTransport':
+    def __enter__(self) -> 'LineSerialSniffer':
         self._serial.port = self.port
         self._serial.open()
         return self
@@ -80,7 +77,7 @@ class LineSerialSniffer():
         self.traffic_listeners.append(listener)
 
     # enters loop to monitor traffic
-    def listen(self, listener: LineTransportListener = None):
+    def listen(self, listener: LineTransportListener | None = None):
         state = 'wait_sync'
         request = None
         responding = False
@@ -278,7 +275,7 @@ class LineSerialTransport():
 
         return data
 
-    def send_data(self, request: int, data: List[int], checksum: int = None):
+    def send_data(self, request: int, data: List[int], checksum: int | None = None):
         frame = create_frame(request, data, checksum)
 
         self._serial.write(frame)

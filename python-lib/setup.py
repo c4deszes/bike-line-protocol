@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 setup(
     name='line-protocol',
-    version='0.1.0',
+    version='0.3.0',
     author="Balazs Eszes",
     author_email="c4deszes@gmail.com",
     description="Simple protocol for serial communication devices",

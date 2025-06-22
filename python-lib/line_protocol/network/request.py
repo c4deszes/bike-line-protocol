@@ -115,6 +115,28 @@ class Signal():
     initial: Union[int, float, str]
     encoder: SignalEncoder
 
+@dataclass(unsafe_hash=True)
+class SignalValue:
+    signal: Signal
+    phy: Union[int, float, str]
+    raw: int
+
+class SignalValueContainer():
+
+    def __init__(self, signals: List[SignalValue]) -> None:
+        self._signals = {signal.signal.name: signal for signal in signals}
+
+    def get_signal(self, name: str) -> SignalValue:
+        if name in self._signals:
+            return self._signals[name]
+        raise KeyError(f'Signal {name} not found')
+    
+    def __getitem__(self, name: str) -> SignalValue:
+        return self.get_signal(name)
+
+    def __iter__(self):
+        return iter(self._signals.values())
+
 class Request():
 
     def __init__(self, name: str, id: int, size: int, signals: List[Signal]) -> None:
@@ -172,10 +194,10 @@ class Request():
                 return x
         raise KeyError()
     
-    def encode_raw(self, signals: Dict[str, int]):
+    def encode_raw(self, signals: Dict[str, int]) -> List[int]:
         raise NotImplementedError()
 
-    def encode(self, signals: Dict[str, Union[str, int, float]]):
+    def encode(self, signals: Dict[str, Union[str, int, float]]) -> List[int]:
         data = self.data_class()
         for signal in self.signals:
             if signal.name in signals:
@@ -196,8 +218,22 @@ class Request():
         decoded = self.data_class.from_buffer_copy(bytes(data + [0]))
         return decoded.fields
 
-    def decode(self, data: Iterable[int]) -> Dict[str, Union[int, str, float]]:
-        values = self.decode_raw(data)
-        for key in values.keys():
-            values[key] = self.get_signal(key).encoder.decode(values[key])
-        return values
+    def decode(self, data: Iterable[int]) -> SignalValueContainer:
+        decoded = self.decode_raw(data)
+        signals = []
+        for signal in self.signals:
+            if signal.name in decoded:
+                raw_value = decoded[signal.name]
+                phy_value = signal.encoder.decode(raw_value) if signal.encoder else raw_value
+                signals.append(SignalValue(signal, phy_value, raw_value))
+            else:
+                raise KeyError(f'Signal {signal.name} not found in decoded data')
+        return SignalValueContainer(signals)
+
+@dataclass
+class SignalRef:
+    request: Request
+    signal: Signal
+
+    def __hash__(self):
+        return hash((self.request.name, self.signal.name))

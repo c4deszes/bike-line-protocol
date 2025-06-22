@@ -1,21 +1,40 @@
-from typing import Literal, List, Union, TYPE_CHECKING, Dict
-from types import SimpleNamespace
+from typing import Union, Dict
 import logging
 import argparse
 import sys
 import time
 
-from ..protocol.transport import LineSerialTransport, LineTransportTimeout
-from ..protocol.master import LineMaster, NodeStatus
-from ..protocol.constants import *
-from ..network import Network, load_network, Node
+from line_protocol.protocol.transport import LineSerialTransport, LineTransportTimeout
+from line_protocol.protocol.master import LineMaster, NodeStatus
+from line_protocol.protocol.constants import *
+from line_protocol.network import Network, load_network, Node
 
 def network_discovery(master: LineMaster, start: int = 1, end: int = 14,
-                      network: Network = None) -> Dict[Union[int, str], NodeStatus]:
-    
+                      network: Network | None = None) -> Dict[Union[int, str], NodeStatus]:
+    """
+    Discover all nodes in the network by querying their operation status,
+    software version, and serial number. The discovery process will attempt
+    to query all addresses from `start` to `end`, which defaults to 1 to 14.
+
+    If a `network` instance is provided, it will be used to resolve node addresses
+    to their corresponding Node objects. If a node address is not found in the
+    network, the address itself will be used as the key.
+
+    :param master: The LineMaster instance to use for communication
+    :type master: LineMaster
+    :param start: The starting address to query, defaults to 1
+    :type start: int, optional
+    :param end: The ending address to query, defaults to 14
+    :type end: int, optional
+    :param network: The network instance to use for communication, defaults to None
+    :type network: Network, optional
+    :return: A dictionary mapping node addresses to their status
+    :rtype: Dict[Union[int, str], NodeStatus]
+    """
+
     nodes = {}
 
-    for address in range(1, LINE_DIAG_UNICAST_BROADCAST_ID):
+    for address in range(start, end):
         if network is not None:
             try:
                 key = network.get_node_by_address(address)
@@ -69,7 +88,7 @@ def main():
     with LineSerialTransport(args.port,
                              baudrate=args.baudrate if network is None else network.baudrate,
                              one_wire=True) as transport:
-        with LineMaster(transport) as master:
+        with LineMaster(transport, network) as master:
 
             master.wakeup()
 

@@ -1,9 +1,10 @@
 import time
 from typing import List, TYPE_CHECKING, Literal, Union
 
+from line_protocol.network.request import Request
+from line_protocol.network.nodes import Node
+
 if TYPE_CHECKING:
-    from .request import Request
-    from .network import Node
     from ..protocol import LineMaster
 
 class ScheduleEntry():
@@ -40,7 +41,7 @@ class GetOperationStatusScheduleEntry(ScheduleEntry):
         self.node = node
 
     def perform(self, master: 'LineMaster'):
-        master.get_operation_status(self.node.address)
+        master.get_operation_status(self.node.address, wait=False)
 
 class GetPowerStatusScheduleEntry(ScheduleEntry):
 
@@ -48,7 +49,7 @@ class GetPowerStatusScheduleEntry(ScheduleEntry):
         self.node = node
 
     def perform(self, master: 'LineMaster'):
-        master.get_power_status(self.node.address)
+        master.get_power_status(self.node.address, wait=False)
 
 class GetSerialNumberScheduleEntry(ScheduleEntry):
 
@@ -56,7 +57,7 @@ class GetSerialNumberScheduleEntry(ScheduleEntry):
         self.node = node
 
     def perform(self, master: 'LineMaster'):
-        master.get_serial_number(self.node.address)
+        master.get_serial_number(self.node.address, wait=False)
 
 class GetSoftwareVersionScheduleEntry(ScheduleEntry):
 
@@ -64,7 +65,7 @@ class GetSoftwareVersionScheduleEntry(ScheduleEntry):
         self.node = node
 
     def perform(self, master: 'LineMaster'):
-        master.get_software_version(self.node.address)
+        master.get_software_version(self.node.address, wait=False)
 
 class ScheduleExecutor:
 
@@ -74,20 +75,23 @@ class ScheduleExecutor:
         which entry to execute.
         """
         raise NotImplementedError()
-    
+
     def wait(self) -> None:
         """
         Wait for the next entry to be executed.
         """
         raise NotImplementedError()
-    
+
     def disable_entry(self, entry: Union[int, ScheduleEntry]) -> None:
         raise NotImplementedError()
-    
+
     def enable_entry(self, entry: Union[int, ScheduleEntry]) -> None:
         raise NotImplementedError()
-    
+
 class Schedule:
+
+    def __init__(self, name: str) -> None:
+        self.name = name
     
     def create_executor(self) -> ScheduleExecutor:
         """
@@ -111,7 +115,7 @@ class FixedOrderSchedule(Schedule):
 
     def __init__(self, name: str, entries: List[ScheduleEntry], slots: Literal['variable', 'fixed'],
                  reserve_slots: bool, delay: float) -> None:
-        self.name = name
+        super().__init__(name)
         self.entries = entries
         self.slots = slots
         self.reserve_slots = reserve_slots
@@ -175,9 +179,9 @@ class PriorityAgingSchedule(Schedule):
     high cycle value.
     """
 
-    def __init__(self, name: str, entries: List[PriorityScheduleEntry], slots: Literal['dynamic', 'fixed'],
+    def __init__(self, name: str, entries: List[PriorityScheduleEntry], slots: Literal['variable', 'fixed'],
                  phase: Literal['zero', 'adjusted'], reserve_slots: bool, delay: float) -> None:
-        self.name = name
+        super().__init__(name)
         self.entries = entries
         self.slots = slots
         self.phase = phase
@@ -215,7 +219,7 @@ class PriorityAgingScheduleExecutor(ScheduleExecutor):
                 # Reset the cycle counter and return the entry
                 self.cycle_counters[i] = 0
                 return self.schedule.entries[i].entry
-            
+
         # Check if any entry has a cycle counter higher than the cycle value
         for i in range(len(self.schedule.entries)):
             if self.cycle_counters[i] >= self.schedule.entries[i].cycle:

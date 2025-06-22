@@ -1,0 +1,7 @@
+C API
+=====
+
+.. toctree::
+    :glob:
+
+    *

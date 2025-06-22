@@ -9,9 +9,6 @@ from line_protocol.network.nodes import Node
 from line_protocol.protocol.constants import *
 from line_protocol.network import Request
 
-if TYPE_CHECKING:
-    from .master import PowerStatus
-
 logger = logging.getLogger(__name__)
 
 class VirtualBus(LineTransportListener):
@@ -24,12 +21,28 @@ class VirtualBus(LineTransportListener):
     """
 
     def __init__(self) -> None:
-        self.members = []
+        self.members: List[LineTransportListener] = []
 
     def add(self, listener: LineTransportListener):
+        """
+        Adds a listener to the virtual bus.
+        This listener will receive all requests sent to the bus and can respond to them.
+
+        :param listener: Listener to add to the bus
+        :type listener: LineTransportListener
+        """
         self.members.append(listener)
 
-    def on_request(self, request: int) -> List[int]:
+    def on_request(self, request: int) -> List[int] | None:
+        """
+        Handles a request by forwarding it to all members of the bus.
+        If multiple members respond, a bus contention error is raised.
+
+        :param request: Request code
+        :type request: int
+        :return: Response data from the member that responded
+        :rtype: List[int]
+        """
         response = None
         for member in self.members:
             r = member.on_request(request)
@@ -44,159 +57,32 @@ class VirtualBus(LineTransportListener):
         return response
 
     def on_request_complete(self, request: int, data: List[int]):
+        """
+        Handles the completion of a request by notifying all members of the bus.
+        This method is called when a request has been processed and the data is ready to be sent
+        back to the requester.
+        This is typically used to notify all members that a request has been completed and to
+        provide them with the data that was returned.
+
+        :param request: Request code that was processed
+        :type request: int
+        :param data: Data returned by the member that processed the request
+        :type data: List[int]
+        """
         for member in self.members:
             member.on_request_complete(request, data)
 
-    def on_error(self, error_type: str):
+    def on_error(self, request: int, error_type: str):
+        """
+        Handles an error that occurred during the processing of a request.
+        This method is called when an error occurs while processing a request. It notifies all
+        members of the bus about the error, allowing them to handle it appropriately.
+
+        :param request: Request code that caused the error
+        :type request: int
+        :param error_type: Type of error that occurred, e.g., 'bus contention', 'timeout', etc.
+        :type error_type: str
+        """
         for member in self.members:
-            member.on_error(error_type)
+            member.on_error(request, error_type)
 
-class SimulatedPeripheral(LineTransportListener):
-
-    def __init__(self, node: Node) -> None:
-        self.node = node
-        self.connected = True
-
-        self.address = node.address
-        self.requests = SimpleNamespace()
-        self._op_status = None
-        self._power_status = None
-        self._software_version = None
-        self._serial_number = None
-
-        for request in node.publishes:
-            signals = SimpleNamespace()
-            for signal in request.signals:
-                signals.__setattr__(signal.name, signal.initial)
-            self.requests.__setattr__(request.name, signals)
-
-    def on_request(self, request: int) -> List[int]:
-        if self.connected is False:
-            return None
-
-        # Application
-        for x in self.node.publishes:
-            if x.id == request:
-                return x.encode(vars(self.requests.__getattribute__(x.name)))
-
-        # Diagnostics
-        if self.address is None or self.address == LINE_DIAG_UNICAST_UNASSIGNED_ID:
-            return None
-
-        if request == LINE_DIAG_REQUEST_OP_STATUS | self.address:
-            if self._op_status is not None:
-                return [self._op_status]
-            else:
-                return None
-        elif request == LINE_DIAG_REQUEST_SERIAL_NUMBER | self.address:
-            if self._serial_number is not None:
-                return list(int.to_bytes(self._serial_number, 4, 'little'))
-            else:
-                return None
-        elif request == LINE_DIAG_REQUEST_SW_NUMBER | self.address:
-            if self._software_version is not None:
-                return [self._software_version[0], self._software_version[1], self._software_version[2]]
-            else:
-                return None
-        elif request == LINE_DIAG_REQUEST_POWER_STATUS | self.address:
-            if self._power_status is not None:
-                return [self._power_status.voltage,
-                        self._power_status.op_current & 0xFF, self._power_status.op_current >> 8,
-                        self._power_status.sleep_current]
-            else:
-                return None
-        
-        return None
-
-    def on_request_complete(self, request: int, data: List[int]):
-        if self.connected is False:
-            return
-
-        if request == LINE_DIAG_REQUEST_WAKEUP:
-            self.on_wakeup()
-        elif request == LINE_DIAG_REQUEST_IDLE:
-            self.on_idle()
-        elif request == LINE_DIAG_REQUEST_SHUTDOWN:
-            self.on_shutdown()
-        elif request == LINE_DIAG_REQUEST_COND_CHANGE_ADDRESS:
-            target = int.from_bytes(data[0:4], 3)
-            if self._serial_number == target:
-                old = self.address
-                self.address = target[4]
-                self.on_conditional_change_address(old, self.address)
-            elif self.address == target[4]:
-                self.address = LINE_DIAG_UNICAST_UNASSIGNED_ID
-                # TODO: callout unassign
-        else:
-            for s in self.node.subscribes:
-                if s.id == request:
-                    signals = s.decode(data)
-                    self.on_subscriber_event(s, signals)
-
-    def on_error(self, error_type: str):
-        pass
-
-    # Diagnostic properties
-
-    @property
-    def op_status(self) -> int:
-        return self._op_status
-    
-    @op_status.setter
-    def op_status(self, value: Union[int, str]) -> None:
-        if isinstance(value, str):
-            self._op_status = op_status_code(value)
-        else:
-            self._op_status = value
-
-    @property
-    def power_status(self) -> 'PowerStatus':
-        return self._power_status
-    
-    @property
-    def software_version(self) -> str:
-        return sw_version_str(self._software_version) if self._software_version else None
-    
-    @software_version.setter
-    def software_version(self, value: str) -> None:
-        if isinstance(value, str):
-            parts = value.split('.')
-            if len(parts) != 3:
-                raise ValueError('Software version must be in format "major.minor.patch"')
-            self._software_version = [int(part) for part in parts]
-        else:
-            self._software_version = value
-
-    @property
-    def serial_number(self) -> int:
-        return self._serial_number
-    
-    @serial_number.setter
-    def serial_number(self, value: int) -> None:
-        self._serial_number = value
-
-    def on_subscriber_event(self, request: Request, signals: Dict[str, Union[int, str, float]]):
-        pass
-
-    # Diagnostic events
-
-    def on_wakeup(self):
-        """
-        Called when the peripheral is woken up from sleep mode.
-        """
-        pass
-
-    def on_idle(self):
-        """
-        Called when the peripheral is put into idle mode.
-        """
-        pass
-
-    def on_shutdown(self):
-        """
-        Called when the peripheral is put into shutdown mode.
-        """
-        pass
-
-    def on_conditional_change_address(self, old: int, new: int):
-        pass

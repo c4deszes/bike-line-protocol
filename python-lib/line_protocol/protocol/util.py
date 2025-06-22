@@ -1,8 +1,9 @@
 """
 Utility functions for the LINE protocol.
 """
-from typing import List, Literal, Iterable
-from .constants import *
+from typing import List, Literal, Iterable, Sized
+
+from line_protocol.protocol.constants import *
 
 def request_code(request: int) -> int:
     """
@@ -14,7 +15,7 @@ def request_code(request: int) -> int:
     :rtype: int
     """
     if request > LINE_REQUEST_PARITY_MASK or request < 0:
-        return ValueError('Invalid request code.')
+        raise ValueError('Invalid request code.')
 
     parity1 = 0
     tempData = request
@@ -57,7 +58,7 @@ def create_header(request: int) -> bytearray:
     request = request_code(request)
     return bytearray([LINE_SYNC_BYTE, (request & 0xFF00) >> 8, request & 0xFF])
 
-def create_frame(request: int, data: List[int], checksum: int = None) -> bytearray:
+def create_frame(request: int, data: List[int], checksum: int | None = None) -> bytearray:
     """
     Creates a complete frame for a LINE protocol request that can be sent over the bus.
 
@@ -114,5 +115,3 @@ def sw_version_str(version: List[int]) -> str:
     :rtype: str
     """
     return '.'.join(str(x) for x in version if x is not None)
-
-

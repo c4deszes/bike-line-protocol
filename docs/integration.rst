@@ -29,7 +29,7 @@ no response is received.
 .. code-block:: c
 
     void Task1ms() {
-        LINE_Transport_Update(0, 1);    // Update channel 0 time by 1ms
+        LINE_Transport_Update(transport_channel, 1);    // Update channel 0 time by 1ms
 
         int bytesAvailable = USART_HasData();
         while (bytesAvailable > 0) {
