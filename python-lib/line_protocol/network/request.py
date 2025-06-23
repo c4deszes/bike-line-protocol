@@ -133,6 +133,9 @@ class SignalValueContainer():
     
     def __getitem__(self, name: str) -> SignalValue:
         return self.get_signal(name)
+    
+    def __contains__(self, name: str) -> bool:
+        return name in self._signals
 
     def __iter__(self):
         return iter(self._signals.values())
