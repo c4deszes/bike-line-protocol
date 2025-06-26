@@ -45,7 +45,7 @@ class NoneEncoder(SignalEncoder):
         if not isinstance(value, int):
             raise ValueError(f"Unable to encode non-integer {value}")
         return value
-    
+
     def decode(self, value: int) -> int:
         return value
 
@@ -64,7 +64,7 @@ class FormulaEncoder(SignalEncoder):
         if isinstance(value, str):
             value = float(value)
         return int((value - self.offset) / self.scale)
-    
+
     def decode(self, value: int) -> float:
         return value * self.scale + self.offset
 
@@ -82,7 +82,7 @@ class MappingEncoder(SignalEncoder):
             if val == value:
                 return key
         raise ValueError(f'{self.name}: Unable to encode {value}')
-    
+
     def decode(self, value: int) -> str:
         if value in self.mapping:
             return self.mapping[value]
@@ -130,10 +130,10 @@ class SignalValueContainer():
         if name in self._signals:
             return self._signals[name]
         raise KeyError(f'Signal {name} not found')
-    
+
     def __getitem__(self, name: str) -> SignalValue:
         return self.get_signal(name)
-    
+
     def __contains__(self, name: str) -> bool:
         return name in self._signals
 
@@ -190,13 +190,13 @@ class Request():
                 fields.append((signal.name, ctypes.c_uint32, signal.width))
             offset += signal.width
         return fields
-    
+
     def get_signal(self, name: str) -> Signal:
         for x in self.signals:
             if x.name == name:
                 return x
         raise KeyError()
-    
+
     def encode_raw(self, signals: Dict[str, int]) -> List[int]:
         raise NotImplementedError()
 
@@ -215,7 +215,7 @@ class Request():
                     value = signal.initial
             setattr(data, signal.name, value)
         return list(bytes(data))
-    
+
     def decode_raw(self, data) -> Dict[str, int]:
         # TODO: in some requests the length required is longer than the actual length
         decoded = self.data_class.from_buffer_copy(bytes(data + [0]))

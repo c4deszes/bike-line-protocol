@@ -18,12 +18,18 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PowerStatus():
+    """
+    Power status of a node, contains the voltage, operational current and sleep current.
+    """
     voltage: float
     op_current: float
     sleep_current: float
 
 @dataclass
 class NodeStatus():
+    """
+    Status of a node, contains the operation status, power status, serial number and software version.
+    """
     op_status: OperationStatus | None
     power_status: PowerStatus | None
     serial_number: int | None
@@ -146,7 +152,7 @@ class NodeStatusListener:
 
 class LineMaster():
 
-    def __init__(self, transport: 'LineSerialTransport', network: 'Network | None' = None) -> None:
+    def __init__(self, transport: 'LineSerialTransport | None' = None, network: 'Network | None' = None) -> None:
         self.transport = transport
         self.network = network
         self.virtual_bus = VirtualBus()
@@ -246,7 +252,7 @@ class LineMaster():
                 listener.on_node_change(time.time(), NodeRef("Unset", node_id), self._node_status[node_id], NodeStatusProperty.POWER_STATUS)
         elif (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_SERIAL_NUMBER:
             node_id = request & LINE_DIAG_UNICAST_ID_MASK
-            self._node_status[node_id].serial_number = int.from_bytes(data[0:3], 'big')
+            self._node_status[node_id].serial_number = int.from_bytes(data[0:4], 'little')
             for listener in self.node_status_listeners:
                 listener.on_node_change(time.time(), NodeRef("Unset", node_id), self._node_status[node_id], NodeStatusProperty.SERIAL_NUMBER)
         elif (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_SW_NUMBER:

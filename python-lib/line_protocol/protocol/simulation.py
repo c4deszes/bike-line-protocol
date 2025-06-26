@@ -8,8 +8,7 @@ from line_protocol.protocol.util import op_status_code, op_status_str, sw_versio
 from line_protocol.network.nodes import Node
 from line_protocol.protocol.constants import *
 from line_protocol.network import Request, SignalValueContainer
-
-from .master import PowerStatus
+from line_protocol.protocol.master import PowerStatus
 
 class SimulatedPeripheral(LineTransportListener):
 
@@ -55,7 +54,7 @@ class SimulatedPeripheral(LineTransportListener):
                 return None
         elif request == LINE_DIAG_REQUEST_SW_NUMBER | self.address:
             if self._software_version is not None:
-                return [self._software_version[0], self._software_version[1], self._software_version[2]]
+                return [self._software_version[0], self._software_version[1], self._software_version[2], 0]
             else:
                 return None
         elif request == LINE_DIAG_REQUEST_POWER_STATUS | self.address:
@@ -79,7 +78,7 @@ class SimulatedPeripheral(LineTransportListener):
         elif request == LINE_DIAG_REQUEST_SHUTDOWN:
             self.on_shutdown()
         elif request == LINE_DIAG_REQUEST_COND_CHANGE_ADDRESS:
-            target = int.from_bytes(data[0:4], 3)
+            target = int.from_bytes(data[0:4], 'little')
             if self._serial_number == target:
                 old = self.address
                 self.address = target[4]
