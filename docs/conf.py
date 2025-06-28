@@ -1,9 +1,16 @@
 import sys, os
 
+with open(os.path.join(os.path.dirname(__file__), "..", "library.properties"), "r") as f:
+    version_str = "0.0.0"  # Default version in case of failure to read
+    for line in f:
+        if line.startswith("version="):
+            version_str = line.strip().split("=", 1)[1]
+            break
+
 project = "line-protocol"
 copyright = "Balazs Eszes, 2025"
 author = "Balazs Eszes"
-version = '0.3.0'
+version = version_str
 
 sys.path.append(os.path.abspath("./_ext"))
 sys.path.append(os.path.abspath("../python-lib"))
