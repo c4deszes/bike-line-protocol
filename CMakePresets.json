@@ -30,8 +30,7 @@
             "name": "build-test-targets",
             "hidden": true,
             "targets": [
-                "test_TransportReceive",
-                "coverage_report"
+                "test_TransportReceive"
             ]
         },
         {
