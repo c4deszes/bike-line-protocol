@@ -23,6 +23,7 @@ extern "C"
 #include "line_transport_priv.h"
 
 /*
+ * @def BUILD_FRAME(array, id, ...)
  * @brief Generates an array of bytes containing a frame with the given id and payload
  * @example BUILD_FRAME(frame, 0x10A4, 0x01, 0x02, 0x03);
  */
@@ -40,6 +41,7 @@ extern "C"
     };
 
 /*
+ * @def BUILD_REQUEST(array, id)
  * @brief Generates an array of bytes containing a request with the given id
  * @example BUILD_REQUEST(request, 0x10A4);
  */

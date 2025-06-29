@@ -26,21 +26,25 @@
                 "FrontSpeed": {
                     "offset": 0,
                     "width": 16,
+                    "initial": 0,
                     "encoder": "SpeedEncoder"
                 },
                 "RearSpeed": {
                     "offset": 16,
                     "width": 16,
+                    "initial": 0,
                     "encoder": "SpeedEncoder"
                 },
                 "FrontSpeedStatus": {
                     "offset": 32,
                     "width": 2,
+                    "initial": "Invalid",
                     "encoder": "SpeedValidity"
                 },
                 "RearSpeedStatus": {
                     "offset": 34,
                     "width": 2,
+                    "initial": "Invalid",
                     "encoder": "SpeedValidity"
                 }
             }

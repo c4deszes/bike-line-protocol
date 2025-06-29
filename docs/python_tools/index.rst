@@ -1,12 +1,9 @@
-Python library
-==============
+Python tools
+============
 
 .. toctree::
     :hidden:
 
-    analyze
     codegen
     discovery
-    monitor
     network
-    plot

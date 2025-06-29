@@ -1,8 +1,15 @@
-from typing import List
+import logging
+from typing import List, Union, TYPE_CHECKING, Dict
 from types import SimpleNamespace
-from .transport import LineTransportListener
-from ..network.nodes import Node
-from .constants import *
+from dataclasses import dataclass
+
+from line_protocol.protocol.transport import LineTransportListener
+from line_protocol.protocol.util import op_status_code, op_status_str, sw_version_str
+from line_protocol.network.nodes import Node
+from line_protocol.protocol.constants import *
+from line_protocol.network import Request
+
+logger = logging.getLogger(__name__)
 
 class VirtualBus(LineTransportListener):
     """
@@ -14,117 +21,68 @@ class VirtualBus(LineTransportListener):
     """
 
     def __init__(self) -> None:
-        self.listeners = []
+        self.members: List[LineTransportListener] = []
 
     def add(self, listener: LineTransportListener):
-        self.listeners.append(listener)
+        """
+        Adds a listener to the virtual bus.
+        This listener will receive all requests sent to the bus and can respond to them.
 
-    # TODO: function to temporarily connect/disconnect nodes
+        :param listener: Listener to add to the bus
+        :type listener: LineTransportListener
+        """
+        self.members.append(listener)
 
-    def on_request(self, request: int) -> List[int]:
+    def on_request(self, request: int) -> List[int] | None:
+        """
+        Handles a request by forwarding it to all members of the bus.
+        If multiple members respond, a bus contention error is raised.
+
+        :param request: Request code
+        :type request: int
+        :return: Response data from the member that responded
+        :rtype: List[int]
+        """
         response = None
-        for listener in self.listeners:
-            r = listener.on_request(request)
+        for member in self.members:
+            r = member.on_request(request)
 
             if r != None and response != None:
                 # TODO: notify of error rather than exception
                 raise RuntimeError('Bus contention')
             
-            response = r
+            if r != None:
+                response = r
 
         return response
 
     def on_request_complete(self, request: int, data: List[int]):
-        for listener in self.listeners:
-            listener.on_request_complete(request, data)
+        """
+        Handles the completion of a request by notifying all members of the bus.
+        This method is called when a request has been processed and the data is ready to be sent
+        back to the requester.
+        This is typically used to notify all members that a request has been completed and to
+        provide them with the data that was returned.
 
-    def on_error(self, error_type: str):
-        for listener in self.listeners:
-            listener.on_error(error_type)
+        :param request: Request code that was processed
+        :type request: int
+        :param data: Data returned by the member that processed the request
+        :type data: List[int]
+        """
+        for member in self.members:
+            member.on_request_complete(request, data)
 
-class SimulatedPeripheral(LineTransportListener):
+    def on_error(self, request: int, error_type: str):
+        """
+        Handles an error that occurred during the processing of a request.
+        This method is called when an error occurs while processing a request. It notifies all
+        members of the bus about the error, allowing them to handle it appropriately.
 
-    def __init__(self, node: Node) -> None:
-        self.node = node
-        self.address = node.address
-        self.signals = SimpleNamespace()
+        :param request: Request code that caused the error
+        :type request: int
+        :param error_type: Type of error that occurred, e.g., 'bus contention', 'timeout', etc.
+        :type error_type: str
+        """
+        for member in self.members:
+            member.on_error(request, error_type)
 
-        for request in node.publishes:
-            for signal in request.signals:
-                self.signals.__setattr__(signal.name, signal.initial)
-
-    def on_request(self, request: int) -> List[int]:
-        # TODO: if publishing request then respond with encoded frame
-        for x in self.node.publishes:
-            if x.id == request:
-                return x.encode(vars(self.signals))
-
-        # Diagnostics
-        if self.address == LINE_DIAG_UNICAST_UNASSIGNED_ID:
-            return None
-        if request == LINE_DIAG_REQUEST_OP_STATUS | self.address:
-            status = self.get_operation_status()
-            if status:
-                return [status]
-            else:
-                return None
-        elif request == LINE_DIAG_REQUEST_SERIAL_NUMBER | self.address:
-            serial_number = self.get_serial_number()
-            if serial_number:
-                return list(int.to_bytes(serial_number, 4, 'little'))
-            else:
-                return None
-        # TODO: sw number support
-        # TODO: power status support
-        
-        return None
-    
-    def on_error(self, error_type: str):
-        pass
-
-    def on_request_complete(self, request: int, data: List[int]):
-        # TODO: if subscribed to request then update the signals
-        for s in self.node.subscribes:
-            if s.id == request:
-                signals = s.decode(data)
-                self.on_subscriber_event(signals)
-
-        if request == LINE_DIAG_REQUEST_WAKEUP:
-            self.on_wakeup()
-        elif request == LINE_DIAG_REQUEST_IDLE:
-            self.on_idle()
-        elif request == LINE_DIAG_REQUEST_SHUTDOWN:
-            self.on_shutdown()
-        elif request == LINE_DIAG_REQUEST_COND_CHANGE_ADDRESS:
-            target = int.from_bytes(data[0:4], 3)
-            if self.get_serial_number() == target:
-                old = self.address
-                self.address = target[4]
-                self.on_conditional_change_address(old, self.address)
-            elif self.address == target[4]:
-                self.address = LINE_DIAG_UNICAST_UNASSIGNED_ID
-                # TODO: callout unassign
-
-    def get_operation_status(self):
-        return LINE_DIAG_OP_STATUS_OK
-
-    def get_serial_number(self):
-        return 0xDEADBEEF
-
-    def get_software_version(self):
-        pass
-
-    def on_subscriber_event(self, signals):
-        pass
-
-    def on_wakeup(self):
-        pass
-
-    def on_idle(self):
-        pass
-
-    def on_shutdown(self):
-        pass
-
-    def on_conditional_change_address(self, old: int, new: int):
-        pass

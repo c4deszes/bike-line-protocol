@@ -1,62 +1,39 @@
 Integration guide
 =================
 
-Physical and Transport layer
-----------------------------
+Code integration
+----------------
 
-During the initialization of the program the transport layer should be initialized as well.
-This sets the internal states to be ready receiving the first frame.
+Below is the minimal code example to get the library working, this is assuming that an underlying
+driver capable of sending and receiving bytes is present. Generally the transport layer would be
+a serial port running at one of the standard frequencies.
+
+When using the code generator only one function needs to be called during intialization, this takes
+care of setting up the transport channels and diagnostics, all depending on configuration.
 
 .. code-block:: c
 
-    #include "line_transport.h"
+    #include "line_protocol.h"
+    #include "line_api.h"
 
     void Init() {
-        LINE_Transport_Init();
+        LINE_App_Init();
     }
 
 As data is being received from the physical layer the receive function should be called. How often
 the receive function is called is important in making sure all requests are processed in time.
 
+The transport channels also need a regular update call, this ensures that frames are timed out when
+no response is received.
+
 .. code-block:: c
 
-    void Task10ms() {
+    void Task1ms() {
+        LINE_Transport_Update(transport_channel, 1);    // Update channel 0 time by 1ms
+
         int bytesAvailable = USART_HasData();
         while (bytesAvailable > 0) {
-            LINE_Transport_Receive(USART_GetData());
-        }
-    }
-
-There are three callback functions that are called once a frame is processed.
-
-The request handler is called when the header part of a frame is received with valid parity. The
-handler then needs to decide whether it's going to respond by returning ``true`` or ``false``.
-The purpose of the return value is so the responding device can identify it's own message in the
-data callback.
-
-.. code-block:: c
-
-    bool LINE_Transport_OnRequest(uint16_t request) {
-        if (request == 0x0100) {
-            LINE_Transport_WriteData();
-            return true;
-        }
-        return false;
-    }
-
-The data handler is called when the data part of a frame is received with a valid checksum. The
-handler would normally also be called with the data that's sent out by the device due to the
-one-wire nature of the physical layer.
-
-.. code-block:: c
-
-    void LINE_Transport_OnData(bool response, uint16_t request, uint8_t size, uint8_t* payload) {
-        if (response) {
-            return;
-        }
-
-        if (request == 0x0FFF) {
-            // Call diagnostic function
+            LINE_Transport_Receive(transport_channel, USART_GetData());
         }
     }
 
@@ -78,8 +55,7 @@ used to generate C code for the application layer.
     # which includes all sources and includes
     line_codegen(
         TARGET protocol-stack-api       # Interface target name
-        NETWORK config/network.json     # Path to the network configuration file
-        NODE CustomPeripheral           # Node for which to generate the interface
+        CONFIG config/codegen.json      # Path to the configuration file
         ADAPTER                         # When added it includes default adapters between
                                         # the application and transport layer
     )
@@ -98,7 +74,7 @@ compile command can be called with the additional library path.
 
 .. code-block:: bash
 
-    line-codegen network.json --output . --node Arduino
+    line-codegen config.json --output .
     arduino-cli compile -b <board> --library C:/workspace/bike-line-protocol --clean
 
 .. note:: The solution relies on the fact that the Arduino library spec. simply takes all ``.c``

@@ -11,7 +11,8 @@
             "generator": "MinGW Makefiles",
             "binaryDir": "${sourceDir}/_build/${presetName}",
             "cacheVariables": {
-                "LINE_PROTOCOL_BUILD_TESTS": "ON"
+                "LINE_PROTOCOL_BUILD_TESTS": "ON",
+                "LINE_PROTOCOL_BUILD_DOCS": "ON"
             }
         },
         {
@@ -19,7 +20,8 @@
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/_build/${presetName}",
             "cacheVariables": {
-                "LINE_PROTOCOL_BUILD_TESTS": "ON"
+                "LINE_PROTOCOL_BUILD_TESTS": "ON",
+                "LINE_PROTOCOL_BUILD_DOCS": "ON"
             }
         }
     ],
@@ -35,7 +37,7 @@
             "name": "build-docs-targets",
             "hidden": true,
             "targets": [
-                "docs"
+                "Sphinx"
             ]
         },
         {

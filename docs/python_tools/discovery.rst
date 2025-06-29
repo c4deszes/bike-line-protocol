@@ -19,7 +19,7 @@ Options
 
 **--baudrate**: Serial communication speed, defaults to 19200
 
-**--no-info**: Disables retrival of information such as software version and serial number
+**--network**: Path to the network file, optional
 
 Example
 -------

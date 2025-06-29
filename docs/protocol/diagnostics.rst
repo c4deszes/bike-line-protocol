@@ -150,19 +150,11 @@ theoretical peak operating current and the sleep mode current consumption. The f
 estimate battery life and the latter is used for compatibility and lastly the sleep current
 indicates whether the battery is going to drain long term.
 
-Power condition value contains:
+The response contains the following:
 
-* Voltage low/high/ok
-* Brown out none/detected
-
-Each current rating is provided as 1 byte in 25mA/inc scaling.
-
-* 134 means 3.35A could be drawn by the peripheral
-
-The sleep current is encoded differently as they are mostly sub-milliampere values, the scaling is
-10uA/inc.
-
-* 130 means 1.3mA is the peripheral's sleep current, which is quite high
+* Measured voltage by the peripheral
+* Actual operating current of the peripheral in 1 mA/inc
+* Sleep current of the peripheral in 1uA/inc
 
 Request code is ``0x021X``, the response length is 4 bytes.
 
@@ -173,9 +165,8 @@ Request code is ``0x021X``, the response length is 4 bytes.
         colwidth = 32;
         node_height = 36;
 
-        0-7: U_status;
-        8-15: BOD_status;
-        16-23: I_operating;
+        0-7: U_measured;
+        8-23: I_operating;
         24-31: I_sleep;
     }
 

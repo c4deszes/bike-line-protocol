@@ -18,6 +18,7 @@ extern "C"
 {% for node in channel.nodes %}
 
 {% if node.diagnostics.enabled %}
+#define LINE_NODE_{{node.node.name}}_DIAG_CHANNEL {{node.diagnostics.diag_channel}}
 #define LINE_NODE_{{node.node.name}}_DIAG_ADDRESS 0x{{'%01X' % node.node.address}}
 void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnWakeup(void);
 void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnIdle(void);
