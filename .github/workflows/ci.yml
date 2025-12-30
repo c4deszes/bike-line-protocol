@@ -7,36 +7,40 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    # TODO: use a container with cmake and python?
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'true'
+        uses: actions/checkout@v6
 
       - name: Setup Python library
         working-directory: python-lib
         run: python -m pip install -e .[dev]
 
+      - name: Install Python tools
+        run: python -m pip install -r requirements.txt
+
       - name: Configure
-        run: cmake --preset gcc-default
-      
+        run: cmake --preset conf-gcc-default
+
       - name: Build
         run: cmake --build --preset build-tests-gcc
-      
+
       - name: Run tests
-        run: ctest --preset test-gcc
-      
-      # TODO: coverage
+        run: ctest --preset test-all-gcc
+
+      - name: Generate coverage report
+        run: cmake --build --preset build-cov-gcc
 
   example_arduino:
     name: Example (Arduino)
     runs-on: ubuntu-latest
+    # TODO: use a container with arduino-cli and python?
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Arduino CLI
-        uses: arduino/setup-arduino-cli@v1
+        uses: arduino/setup-arduino-cli@v2
 
       - name: Install platform
         run: |
@@ -58,10 +62,10 @@ jobs:
   python_test:
     name: Python Test
     runs-on: ubuntu-latest
-    container: python:3.10
+    container: python:3.14
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python library
         working-directory: python-lib

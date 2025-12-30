@@ -7,7 +7,7 @@
     },
     "configurePresets": [
         {
-            "name": "mingw-default",
+            "name": "conf-mingw-default",
             "generator": "MinGW Makefiles",
             "binaryDir": "${sourceDir}/_build/${presetName}",
             "cacheVariables": {
@@ -16,7 +16,7 @@
             }
         },
         {
-            "name": "gcc-default",
+            "name": "conf-gcc-default",
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/_build/${presetName}",
             "cacheVariables": {
@@ -34,6 +34,13 @@
             ]
         },
         {
+            "name": "build-cov-targets",
+            "hidden": true,
+            "targets": [
+                "coverage_report"
+            ]
+        },
+        {
             "name": "build-docs-targets",
             "hidden": true,
             "targets": [
@@ -42,14 +49,24 @@
         },
         {
             "name": "build-tests-gcc",
-            "configurePreset": "gcc-default",
+            "configurePreset": "conf-gcc-default",
             "inherits": "build-test-targets"
+        },
+        {
+            "name": "build-cov-gcc",
+            "configurePreset": "conf-gcc-default",
+            "inherits": "build-cov-targets"
+        },
+        {
+            "name": "build-docs-gcc",
+            "configurePreset": "conf-gcc-default",
+            "inherits": "build-docs-targets"
         }
     ],
     "testPresets": [
         {
-            "name": "test-gcc",
-            "configurePreset": "gcc-default",
+            "name": "test-all-gcc",
+            "configurePreset": "conf-gcc-default",
             "output": {
                 "outputOnFailure": true
             }
