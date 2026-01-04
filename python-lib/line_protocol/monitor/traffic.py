@@ -1,10 +1,11 @@
+# System imports
 from typing import List
 from dataclasses_json import dataclass_json
 from dataclasses import dataclass
 import time
-import binascii
 
-from ..protocol.transport import LineTrafficListener
+# Local imports
+from line_protocol.protocol.transport import LineTrafficListener
 
 @dataclass_json
 @dataclass
@@ -22,7 +23,6 @@ class TrafficRecord(TrafficBaseRecord):
     checksum: int
 
     def __str__(self) -> str:
-        # TODO: limit to length 20 bytes
         return ' '.join(format(i, '02X') for i in self.data)
 
 @dataclass_json

@@ -1,3 +1,5 @@
+# pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring
+# pylint: disable=invalid-name
 import sys
 from unittest.mock import patch
 import pytest
@@ -7,7 +9,6 @@ from line_protocol.util.discovery import main
 class TestLineDiscoveryCli:
 
     @pytest.mark.xfail(reason="This test is expected to fail due to port number")
-    @pytest.mark.unit
     @pytest.mark.parametrize('command', [
         ['line-discovery', '--port', 'COM20'],
         ['line-discovery', '--port', 'COM20', '--baudrate', '19200'],
@@ -18,7 +19,6 @@ class TestLineDiscoveryCli:
         assert exit_ex.value.code == 0
 
     @pytest.mark.xfail(reason="This test is expected to fail due to port number")
-    @pytest.mark.unit
     @pytest.mark.parametrize('command', [
         ['line-discovery', '--port', 'COM20', '--network', 'data/network-1.json'],
         ['line-discovery', '--port', 'COM20', '--network', 'data/network-1.json', '--baudrate', '19200'],

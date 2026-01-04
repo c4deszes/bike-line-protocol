@@ -1,3 +1,5 @@
+# pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring
+# pylint: disable=invalid-name
 import os
 import sys
 from unittest.mock import patch

@@ -1,12 +1,16 @@
+# System imports
 import os
 import sys
 import argparse
+import json
 from typing import Union
 from dataclasses import dataclass
+
+# Third-party imports
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-from ..network import Network, load_network, Node
-import json
+# Local imports
+from line_protocol.network import Network, load_network, Node
 
 @dataclass
 class Channel:

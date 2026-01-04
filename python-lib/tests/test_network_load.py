@@ -1,3 +1,5 @@
+# pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring
+# pylint: disable=invalid-name
 import os
 from line_protocol.network import load_network
 
