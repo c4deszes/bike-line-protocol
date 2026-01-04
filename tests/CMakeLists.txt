@@ -11,7 +11,9 @@ endfunction()
 add_custom_target(coverage_report
     COMMAND ${CMAKE_COMMAND} -E echo "Generating coverage report..."
     COMMAND ${CMAKE_COMMAND} -E make_directory coverage
-    COMMAND gcovr -r ${CMAKE_SOURCE_DIR} --html --html-details -o coverage/coverage.html
+    COMMAND gcovr -r ${CMAKE_SOURCE_DIR} --cobertura coverage/coverage.xml
+                                         --html coverage/coverage.html
+                                         --html-details coverage/coverage_details.html
 )
 
 ################################################################################

@@ -26,7 +26,7 @@ set(SPHINX_BUILD ${CMAKE_CURRENT_SOURCE_DIR}/_build)
 
 add_custom_target(Sphinx ALL
                   COMMAND
-                  sphinx-build -E -b html
+                  ${Python_EXECUTABLE} -m sphinx -E -b html
                   -Dbreathe_projects.line-protocol=${DOXYGEN_OUTPUT_DIR}/xml
                   ${SPHINX_SOURCE} ${SPHINX_BUILD}
                   DEPENDS Doxygen

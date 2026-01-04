@@ -27,9 +27,3 @@ pip install -r requirements.txt
 
 echo "Installing documentation requirements..."
 pip install -r docs/requirements.txt
-
-echo "Setup complete!"
-echo "You can now:"
-echo "  - Build C/C++ code: cmake --preset <preset-name> && cmake --build build"
-echo "  - Build documentation: cd docs && make html"
-echo "  - Run Python tests: cd python-lib && pytest"

@@ -19,17 +19,15 @@ jobs:
       - name: Install Python tools
         run: python -m pip install -r requirements.txt
 
-      - name: Configure
-        run: cmake --preset conf-gcc-default
+      - name: Build and test
+        run: cmake --workflow --preset workflow-test
 
-      - name: Build
-        run: cmake --build --preset build-tests-gcc
-
-      - name: Run tests
-        run: ctest --preset test-all-gcc
-
-      - name: Generate coverage report
-        run: cmake --build --preset build-cov-gcc
+      - name: Upload coverage report
+        uses: 5monkeys/cobertura-action@master
+        with:
+          path: _build/conf-gcc-default/tests/coverage/coverage.xml
+          show_line: true
+          show_branch: true
 
   example_arduino:
     name: Example (Arduino)
@@ -73,10 +71,31 @@ jobs:
       
       - name: Run tests
         working-directory: python-lib
-        run: python -m pytest
+        run: python -m pytest --cov=line_protocol --cov-report=xml
 
-      # TODO: results and coverage?
-      
+      - name: Upload coverage report
+        uses: 5monkeys/cobertura-action@master
+        with:
+          path: python-lib/coverage.xml
+          show_line: true
+          show_branch: true
+
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-latest
+    # TODO: doxygen?
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python library
+        working-directory: python-lib
+        run: python -m pip install -e .[dev]
+
+      - name: Install documentation dependencies
+        run: python -m pip install -r docs/requirements.txt
+
+      - name: Build documentation
+        run: cmake --workflow --preset workflow-docs
+
 # TODO: linting?
-
-# TODO: documentation?

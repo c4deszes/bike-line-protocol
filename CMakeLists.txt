@@ -91,7 +91,7 @@ cmake_parse_arguments(
     set(line_codegen_dir ${CMAKE_CURRENT_BINARY_DIR}/${_TARGET}_gencode)
     add_custom_target(
         line-codegen-${_TARGET}
-        COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/python-lib/line_protocol/codegen/generator.py ${_CONFIG} --output ${line_codegen_dir}
+        COMMAND ${Python_EXECUTABLE} -m line_protocol.codegen ${_CONFIG} --output ${line_codegen_dir}
         DEPENDS ${_NETWORK}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         BYPRODUCTS ${line_codegen_dir}/line_api.c ${line_codegen_dir}/line_api.h

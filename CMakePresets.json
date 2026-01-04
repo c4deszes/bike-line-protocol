@@ -1,5 +1,5 @@
 {
-    "version": 2,
+    "version": 6,
     "cmakeMinimumRequired": {
         "major": 3,
         "minor": 20,
@@ -70,6 +70,55 @@
             "output": {
                 "outputOnFailure": true
             }
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "workflow-build",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "conf-gcc-default"
+                },
+                {
+                    "type": "build",
+                    "name": "build-tests-gcc"
+                }
+            ]
+        },
+        {
+            "name": "workflow-test",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "conf-gcc-default"
+                },
+                {
+                    "type": "build",
+                    "name": "build-tests-gcc"
+                },
+                {
+                    "type": "test",
+                    "name": "test-all-gcc"
+                },
+                {
+                    "type": "build",
+                    "name": "build-cov-gcc"
+                }
+            ]
+        },
+        {
+            "name": "workflow-docs",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "conf-gcc-default"
+                },
+                {
+                    "type": "build",
+                    "name": "build-docs-gcc"
+                }
+            ]
         }
     ]
 }
