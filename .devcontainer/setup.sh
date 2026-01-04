@@ -1,19 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "Installing system dependencies..."
-sudo apt-get update
-sudo apt-get install -y \
-    build-essential \
-    gcc \
-    g++ \
-    cmake \
-    ninja-build \
-    git \
-    doxygen \
-    graphviz \
-    plantuml
-
 echo "Upgrading pip..."
 pip install --upgrade pip
 
