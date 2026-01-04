@@ -22,13 +22,18 @@ jobs:
       - name: Build and test
         run: cmake --workflow --preset workflow-test
 
-      - name: Upload coverage report
-        uses: 5monkeys/cobertura-action@master
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          path: _build/conf-gcc-default/tests/coverage/coverage.xml
-          minimum_coverage: 0
-          show_line: true
-          show_branch: true
+          filename: _build/conf-gcc-default/tests/coverage/coverage.xml
+          badge: false
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '60 80'
 
   example_arduino:
     name: Example (Arduino)
@@ -74,13 +79,18 @@ jobs:
         working-directory: python-lib
         run: python -m pytest --cov=line_protocol --cov-report=xml
 
-      - name: Upload coverage report
-        uses: 5monkeys/cobertura-action@master
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          path: python-lib/coverage.xml
-          minimum_coverage: 0
-          show_line: true
-          show_branch: true
+          filename: python-lib/coverage.xml
+          badge: false
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '60 80'
 
   documentation:
     name: Documentation
