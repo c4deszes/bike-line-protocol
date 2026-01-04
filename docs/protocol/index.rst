@@ -7,6 +7,7 @@ Communication stack
     transport
     application
     diagnostics
+    schedules
 
 The communication stack consists of:
 

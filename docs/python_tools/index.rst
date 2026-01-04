@@ -7,3 +7,4 @@ Python tools
     codegen
     discovery
     network
+    simulation

@@ -10,16 +10,16 @@ Command
 
 .. code-block:: bash
 
-    line-discovery --port <port> [--baudrate <baud>] [--no-info]
+    line-discovery --port <port> [--baudrate <baud>] [--network <network_file>]
 
 Options
 -------
 
-**--port**: Serial port to use
+**--port**: Serial port to use, e.g.: COM3 on Windows or /dev/ttyUSB0 on Linux
 
-**--baudrate**: Serial communication speed, defaults to 19200
+**--baudrate**: Serial communication speed, defaults to 19200. If network is provided this option is ignored.
 
-**--network**: Path to the network file, optional
+**--network**: Path to the network file, optional. When provided the tool will resolve node names based on address
 
 Example
 -------
