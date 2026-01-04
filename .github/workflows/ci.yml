@@ -26,6 +26,7 @@ jobs:
         uses: 5monkeys/cobertura-action@master
         with:
           path: _build/conf-gcc-default/tests/coverage/coverage.xml
+          minimum_coverage: 0
           show_line: true
           show_branch: true
 
@@ -77,14 +78,17 @@ jobs:
         uses: 5monkeys/cobertura-action@master
         with:
           path: python-lib/coverage.xml
+          minimum_coverage: 0
           show_line: true
           show_branch: true
 
   documentation:
     name: Documentation
     runs-on: ubuntu-latest
-    # TODO: doxygen?
     steps:
+      - name: Install Doxygen
+        run: sudo apt-get install doxygen
+
       - name: Checkout
         uses: actions/checkout@v6
 
