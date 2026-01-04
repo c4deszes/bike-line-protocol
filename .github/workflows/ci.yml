@@ -35,6 +35,9 @@ jobs:
           output: both
           thresholds: '60 80'
 
+      - name: Write to Job Summary
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+
   example_arduino:
     name: Example (Arduino)
     runs-on: ubuntu-latest
@@ -91,6 +94,9 @@ jobs:
           indicators: true
           output: both
           thresholds: '60 80'
+
+      - name: Write to Job Summary
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
 
   documentation:
     name: Documentation
