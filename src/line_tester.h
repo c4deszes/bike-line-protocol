@@ -40,6 +40,16 @@ extern "C"
         calculate_checksum(array##_frame, array##_size) \
     };
 
+#define BUILD_EMPTY_FRAME(array, id) \
+    uint16_t array##_req_code = request_code(id); \
+    uint8_t array[] = { \
+        LINE_SYNC_BYTE, \
+        (uint8_t)((array##_req_code >> 8) & 0xFF), \
+        (uint8_t)(array##_req_code & 0xFF), \
+        0x00, \
+        calculate_checksum(NULL, 0) \
+    };
+
 /*
  * @def BUILD_REQUEST(array, id)
  * @brief Generates an array of bytes containing a request with the given id

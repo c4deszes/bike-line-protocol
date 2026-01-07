@@ -19,12 +19,31 @@ add_custom_target(coverage_report
 ################################################################################
 # Test targets
 ################################################################################
-add_executable(test_TransportReceive EXCLUDE_FROM_ALL)
-target_sources(test_TransportReceive PRIVATE
+
+add_executable(test_TransportReceive_Single EXCLUDE_FROM_ALL)
+target_sources(test_TransportReceive_Single PRIVATE
     ../src/transport.c
-    test_TransportReceive.cpp
+    transport/test_TransportReceive_Single.cpp
 )
-add_test(test_TransportReceive)
+add_test(test_TransportReceive_Single)
+
+add_executable(test_TransportReceive_Multiple EXCLUDE_FROM_ALL)
+target_include_directories(test_TransportReceive_Multiple PRIVATE transport/multiple)
+target_sources(test_TransportReceive_Multiple PRIVATE
+    ../src/transport.c
+    transport/multiple/test_TransportReceive_Multiple.cpp
+)
+add_test(test_TransportReceive_Multiple)
+
+add_executable(test_TransportReceive_BufSize EXCLUDE_FROM_ALL)
+target_include_directories(test_TransportReceive_BufSize PRIVATE transport/bufsize)
+target_sources(test_TransportReceive_BufSize PRIVATE
+    ../src/transport.c
+    transport/bufsize/test_TransportReceive_BufSize.cpp
+)
+add_test(test_TransportReceive_BufSize)
+
+################################################################################
 
 # add_executable(test_ApplicationInterface EXCLUDE_FROM_ALL)
 # target_sources(test_ApplicationInterface PRIVATE
