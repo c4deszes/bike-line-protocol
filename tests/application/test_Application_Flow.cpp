@@ -19,10 +19,10 @@ protected:
 };
 
 TEST_F(TestApplicationFlow, StatusResponse_Enabled) {
-    L_Status.enabled = true;
-    L_Status.data.bytes[0] = 0x12;
-    L_Status.data.bytes[1] = 0x34;
-    L_Status.data.bytes[2] = 0x56;
+    l_Status.enabled = true;
+    l_Status.data.bytes[0] = 0x12;
+    l_Status.data.bytes[1] = 0x34;
+    l_Status.data.bytes[2] = 0x56;
     BUILD_REQUEST(request_frame, L_Status_ID);
 
     for (int i = 0; i < sizeof(request_frame); i++) {
@@ -33,13 +33,13 @@ TEST_F(TestApplicationFlow, StatusResponse_Enabled) {
     EXPECT_EQ(LINE_Transport_WriteResponse_fake.arg0_val, LT_Network_CHANNEL);
     EXPECT_EQ(LINE_Transport_WriteResponse_fake.arg1_val, L_Status_SIZE);
     for (int i = 0; i < L_Status_SIZE; i++) {
-        EXPECT_EQ(LINE_Transport_WriteResponse_fake.arg2_val[i], L_Status.data.bytes[i]);
+        EXPECT_EQ(LINE_Transport_WriteResponse_fake.arg2_val[i], l_Status.data.bytes[i]);
     }
-    EXPECT_EQ(L_Status.flag, true);
+    EXPECT_EQ(l_Status.flag, true);
 }
 
 TEST_F(TestApplicationFlow, StatusResponse_Disabled) {
-    L_Status.enabled = false;
+    l_Status.enabled = false;
     BUILD_REQUEST(request_frame, L_Status_ID);
 
     for (int i = 0; i < sizeof(request_frame); i++) {
@@ -56,10 +56,10 @@ TEST_F(TestApplicationFlow, SetFrame_Update) {
         LINE_Transport_Receive(LT_Network_CHANNEL, request_frame[i]);
     }
 
-    EXPECT_EQ(L_Set.data.bytes[0], 0xAA);
-    EXPECT_EQ(L_Set.data.bytes[1], 0xBB);
-    EXPECT_EQ(L_Set.data.bytes[2], 0xCC);
-    EXPECT_EQ(L_Set.flag, true);
+    EXPECT_EQ(l_Set.data.bytes[0], 0xAA);
+    EXPECT_EQ(l_Set.data.bytes[1], 0xBB);
+    EXPECT_EQ(l_Set.data.bytes[2], 0xCC);
+    EXPECT_EQ(l_Set.flag, true);
 }
 
 int main(int argc, char **argv) {

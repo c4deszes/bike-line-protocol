@@ -72,7 +72,7 @@ typedef struct {
 // TODO: verify union length
 // assert sizeof(L_{{request.name}}_t == {{request.size}})
 
-extern L_{{request.name}}_t L_{{request.name}};
+extern L_{{request.name}}_t l_{{request.name}};
 
 
 #endif
@@ -115,7 +115,7 @@ typedef struct {
 // TODO: verify union length
 // assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
 
-extern L_{{request.name}}_t L_{{request.name}};
+extern L_{{request.name}}_t l_{{request.name}};
 
 #endif
 {% endfor %}

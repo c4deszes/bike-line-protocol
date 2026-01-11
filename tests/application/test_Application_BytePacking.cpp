@@ -19,7 +19,7 @@ protected:
 };
 
 TEST_F(TestApplicationBytePacking, Unicast_U8) {
-    L_U8.data.signals.Value = 0xAB;
+    l_U8.data.signals.Value = 0xAB;
     BUILD_REQUEST(diag_frame, L_U8_ID);
 
     for (int i = 0; i < sizeof(diag_frame); i++) {
@@ -33,7 +33,7 @@ TEST_F(TestApplicationBytePacking, Unicast_U8) {
 }
 
 TEST_F(TestApplicationBytePacking, Unicast_U32) {
-    L_U32.data.signals.Value = 0x12345678;
+    l_U32.data.signals.Value = 0x12345678;
     BUILD_REQUEST(diag_frame, L_U32_ID);
 
     for (int i = 0; i < sizeof(diag_frame); i++) {
@@ -50,8 +50,8 @@ TEST_F(TestApplicationBytePacking, Unicast_U32) {
 }
 
 TEST_F(TestApplicationBytePacking, Unicast_U8U16) {
-    L_U8U16.data.signals.First = 0xCD;
-    L_U8U16.data.signals.Second = 0x3456;
+    l_U8U16.data.signals.First = 0xCD;
+    l_U8U16.data.signals.Second = 0x3456;
     BUILD_REQUEST(diag_frame, L_U8U16_ID);
 
     for (int i = 0; i < sizeof(diag_frame); i++) {
@@ -67,9 +67,9 @@ TEST_F(TestApplicationBytePacking, Unicast_U8U16) {
 }
 
 TEST_F(TestApplicationBytePacking, Unicast_U8U16U8) {
-    L_U8U16U8.data.signals.First = 0xEF;
-    L_U8U16U8.data.signals.Second = 0x789A;
-    L_U8U16U8.data.signals.Third = 0x12;
+    l_U8U16U8.data.signals.First = 0xEF;
+    l_U8U16U8.data.signals.Second = 0x789A;
+    l_U8U16U8.data.signals.Third = 0x12;
     BUILD_REQUEST(diag_frame, L_U8U16U8_ID);
 
     for (int i = 0; i < sizeof(diag_frame); i++) {
