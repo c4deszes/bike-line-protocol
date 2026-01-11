@@ -12,70 +12,77 @@ extern "C"
 #include "line_diagnostics.h"
 
 {% for channel in channels %}
-#define LINE_CHANNEL_{{channel.name}} {{channel.channel}}
-#define LINE_NETWORK_{{channel.name}}_BAUDRATE {{channel.network.baudrate}}
+#define LT_{{channel.name}}_CHANNEL {{channel.channel}}
+#define LT_{{channel.name}}_BAUDRATE {{channel.network.baudrate}}
+#define LT_{{channel.name}}_WIREMODE {{'ONEWIRE' if channel.one_wire else 'TWOWIRE'}}
+#define LT_{{channel.name}}_RXBUFFER_SIZE {{channel.rx_buffer_size}}
+#define LT_{{channel.name}}_TXBUFFER_SIZE {{channel.tx_buffer_size}}
 
 {% for node in channel.nodes %}
 
 {% if node.diagnostics.enabled %}
-#define LINE_NODE_{{node.node.name}}_DIAG_CHANNEL {{node.diagnostics.diag_channel}}
-#define LINE_NODE_{{node.node.name}}_DIAG_ADDRESS 0x{{'%01X' % node.node.address}}
-void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnWakeup(void);
-void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnIdle(void);
-void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnShutdown(void);
-void LINE_Diag_{{channel.name}}_{{node.node.name}}_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address);
+#define LD_{{node.node.name}}_CHANNEL {{node.diagnostics.diag_channel}}
+#define LD_{{node.node.name}}_ADDRESS 0x{{'%01X' % node.node.address}}
+void ld_{{channel.name}}_{{node.node.name}}_OnWakeup(void);
+void ld_{{channel.name}}_{{node.node.name}}_OnIdle(void);
+void ld_{{channel.name}}_{{node.node.name}}_OnShutdown(void);
+void ld_{{channel.name}}_{{node.node.name}}_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address);
 
-uint8_t LINE_Diag_{{channel.name}}_{{node.node.name}}_GetOperationStatus(void);
-LINE_Diag_PowerStatus_t* LINE_Diag_{{channel.name}}_{{node.node.name}}_GetPowerStatus(void);
-uint32_t LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSerialNumber(void);
-LINE_Diag_SoftwareVersion_t* LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSoftwareVersion(void);
+uint8_t ld_{{channel.name}}_{{node.node.name}}_GetOperationStatus(void);
+LINE_Diag_PowerStatus_t* ld_{{channel.name}}_{{node.node.name}}_GetPowerStatus(void);
+uint32_t ld_{{channel.name}}_{{node.node.name}}_GetSerialNumber(void);
+LINE_Diag_SoftwareVersion_t* ld_{{channel.name}}_{{node.node.name}}_GetSoftwareVersion(void);
 {% endif %}
 
 /* Published frames */
 {%- for request in node.node.publishes %}
-#ifndef LINE_REQUEST_{{request.name}}_ID
-#define LINE_REQUEST_{{request.name}}_ID 0x{{'%04X' % request.id}}
-#define LINE_REQUEST_{{request.name}}_SIZE {{request.size}}
+#ifndef L_{{request.name}}_ID
+#define L_{{request.name}}_ID 0x{{'%04X' % request.id}}
+#define L_{{request.name}}_SIZE {{request.size}}
 
-typedef union {
-    struct {
-    {%- set position = namespace(value=0) -%}
-    {% for signal in request.signals|sort(attribute='offset') -%}
-        {% if signal.offset > position.value -%}
-        unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
-        {% endif %}
+struct {
+    boolean enabled;
+    union {
+        struct {
+        {%- set position = namespace(value=0) -%}
+        {% for signal in request.signals|sort(attribute='offset') -%}
+            {% if signal.offset > position.value -%}
+            unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
+            {% endif %}
 
-        {%- if signal.width <= 8 %}
-        uint8_t {{signal.name}} : {{signal.width}};
-        {%- elif signal.width <= 16 %}
-        uint16_t {{signal.name}} : {{signal.width}};
-        {%- elif signal.width <= 32 %}
-        uint32_t {{signal.name}} : {{signal.width}};
-        {% endif %}
+            {%- if signal.width <= 8 %}
+            uint8_t {{signal.name}} : {{signal.width}};
+            {%- elif signal.width <= 16 %}
+            uint16_t {{signal.name}} : {{signal.width}};
+            {%- elif signal.width <= 32 %}
+            uint32_t {{signal.name}} : {{signal.width}};
+            {% endif %}
 
-        {%- set position.value = position.value + signal.width -%}
-    {%- endfor %}
-    {%- if position.value < request.size * 8 %}
-        unsigned int _end : {{request.size * 8 - position.value}};
-    {%- endif %}
-    } fields;
-    uint8_t data[{{request.size}}];
-} LINE_Frame_{{request.name}}_t;
+            {%- set position.value = position.value + signal.width -%}
+        {%- endfor %}
+        {%- if position.value < request.size * 8 %}
+            unsigned int _end : {{request.size * 8 - position.value}};
+        {%- endif %}
+        } signals;
+        uint8_t data[{{request.size}}];
+    } data;
+    boolean flag;
+} L_{{request.name}}_t;
 
 // TODO: verify union length
-// assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
+// assert sizeof(L_{{request.name}}_t == {{request.size}})
 
-extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+extern L_{{request.name}}_t L_{{request.name}};
 
-bool LINE_Request_{{request.name}}_flag(void);
+
 #endif
 {% endfor %}
 
 /* Subscribed frames */
 {%- for request in node.node.subscribes %}
-#ifndef LINE_REQUEST_{{request.name}}_ID
-#define LINE_REQUEST_{{request.name}}_ID 0x{{'%04X' % request.id}}
-#define LINE_REQUEST_{{request.name}}_SIZE {{request.size}}
+#ifndef L_{{request.name}}_ID
+#define L_{{request.name}}_ID 0x{{'%04X' % request.id}}
+#define L_{{request.name}}_SIZE {{request.size}}
 
 typedef union {
     struct {
@@ -115,11 +122,11 @@ bool LINE_Request_{{request.name}}_flag(void);
 
 {%- for encoder in channel.network.encoders %}
 {%- if "FormulaEncoder" in encoder.__class__.__name__ %}
-#define LINE_ENCODER_{{encoder.name}}_Encode(value) ((value - {{encoder.offset}}) / {{encoder.scale}})
-#define LINE_ENCODER_{{encoder.name}}_Decode(value) (value * {{encoder.scale}} + {{encoder.offset}})
+#define L_{{encoder.name}}_Encode(value) ((value - {{encoder.offset}}) / {{encoder.scale}})
+#define L_{{encoder.name}}_Decode(value) (value * {{encoder.scale}} + {{encoder.offset}})
 {%- elif "MappingEncoder" in encoder.__class__.__name__ %}
 {%- for key, value in encoder.mapping.items() %}
-#define LINE_ENCODER_{{encoder.name}}_{{value}} {{key}}
+#define L_{{encoder.name}}_{{value}} {{key}}
 {%- endfor %}
 {% endif %}
 {% endfor %}

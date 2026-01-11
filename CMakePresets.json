@@ -32,7 +32,9 @@
             "targets": [
                 "test_TransportReceive_Single",
                 "test_TransportReceive_Multiple",
-                "test_TransportReceive_BufSize"
+                "test_TransportReceive_BufSize",
+                "test_Diagnostics_SingleNode",
+                "test_Diagnostics_MultiNode"
             ]
         },
         {

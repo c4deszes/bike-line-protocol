@@ -16,6 +16,8 @@ from line_protocol.network import Network, load_network, Node
 class Channel:
     name: str
     channel: int
+    rx_buffer_size: int
+    tx_buffer_size: int
     one_wire: bool
     network: Network
     nodes: list[Node]
@@ -77,6 +79,8 @@ def main():
             channel = Channel(
                 name=name,
                 channel=int(props['channel']),
+                rx_buffer_size=int(props['rxBufferSize']),
+                tx_buffer_size=int(props['txBufferSize']),
                 one_wire=bool(props['oneWire']),
                 network=network,
                 nodes=nodes

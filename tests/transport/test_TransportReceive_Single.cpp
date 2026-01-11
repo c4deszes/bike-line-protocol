@@ -21,14 +21,13 @@ LINE_TRANSPORT_INST(Transport, 128, 128, TWOWIRE);
 class TestTransportLayerReceive : public testing::Test {
 protected:
     void SetUp() override {
-        
+        LINE_Transport_Init(0, &Transport);
     }
 };
 
 TEST_F(TestTransportLayerReceive, NotRespondingNoData) {
     LINE_Transport_RespondsTo_fake.return_val = false;
     BUILD_EMPTY_FRAME(data, 0x0000);
-    LINE_Transport_Init(0, &Transport);
 
     for (int i = 0; i < sizeof(data); i++) {
         LINE_Transport_Receive(0, data[i]);
@@ -48,7 +47,6 @@ TEST_F(TestTransportLayerReceive, NotRespondingNoData) {
 TEST_F(TestTransportLayerReceive, NotRespondingWithData) {
     LINE_Transport_RespondsTo_fake.return_val = false;
     BUILD_FRAME(data, 0x0000, 0x00, 0x00, 0x00, 0x00);
-    LINE_Transport_Init(0, &Transport);
 
     for (int i = 0; i < sizeof(data); i++) {
         LINE_Transport_Receive(0, data[i]);
@@ -63,7 +61,6 @@ TEST_F(TestTransportLayerReceive, NotRespondingRequestError) {
     LINE_Transport_RespondsTo_fake.return_val = false;
     BUILD_REQUEST(data, 0x0000);
     data[sizeof(data) - 2] ^= 0xC0; // Corrupt the header
-    LINE_Transport_Init(0, &Transport);
 
     for (int i = 0; i < sizeof(data); i++) {
         LINE_Transport_Receive(0, data[i]);
@@ -79,7 +76,6 @@ TEST_F(TestTransportLayerReceive, NotRespondingDataError) {
     LINE_Transport_RespondsTo_fake.return_val = false;
     BUILD_FRAME(data, 0x0000, 0x00, 0x00, 0x00, 0x00);
     data[sizeof(data) - 1] ^= 0xFF; // Corrupt checksum
-    LINE_Transport_Init(0, &Transport);
 
     for (int i = 0; i < sizeof(data); i++) {
         LINE_Transport_Receive(0, data[i]);
@@ -94,7 +90,6 @@ TEST_F(TestTransportLayerReceive, NotRespondingDataError) {
 TEST_F(TestTransportLayerReceive, NotRespondingHeaderTimeout) {
     LINE_Transport_RespondsTo_fake.return_val = false;
     uint8_t data[] = {LINE_SYNC_BYTE, 0x00};
-    LINE_Transport_Init(0, &Transport);
 
     for (int i = 0; i < sizeof(data); i++) {
         LINE_Transport_Receive(0, data[i]);
@@ -111,7 +106,6 @@ TEST_F(TestTransportLayerReceive, NotRespondingHeaderTimeout) {
 TEST_F(TestTransportLayerReceive, NotRespondingLateHeader) {
     LINE_Transport_RespondsTo_fake.return_val = false;
     BUILD_FRAME(data, 0x0000, 0x00, 0x00, 0x00, 0x00);
-    LINE_Transport_Init(0, &Transport);
 
     for (int i = 0; i < 2; i++) {
         LINE_Transport_Receive(0, data[i]);
@@ -132,7 +126,6 @@ TEST_F(TestTransportLayerReceive, NotRespondingLateHeader) {
 TEST_F(TestTransportLayerReceive, NotRespondingDataTimeout) {
     LINE_Transport_RespondsTo_fake.return_val = false;
     uint8_t data[] = {LINE_SYNC_BYTE, 0x00, 0x00};
-    LINE_Transport_Init(0, &Transport);
 
     for (int i = 0; i < sizeof(data); i++) {
         LINE_Transport_Receive(0, data[i]);

@@ -42,7 +42,7 @@ typedef struct {
 
 static channel_state channels[LINE_TRANSPORT_CHANNEL_COUNT];
 
-void LINE_Transport_Init(uint8_t channel, line_transport_inst_t* inst) {
+void LINE_Transport_Init(uint8_t channel, LINE_Transport_Inst_t* inst) {
     if (channel >= LINE_TRANSPORT_CHANNEL_COUNT) return;
     channels[channel].currentState = protocol_state_wait_sync;
     channels[channel].lastReceived = 0;

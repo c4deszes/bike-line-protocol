@@ -88,7 +88,7 @@ bool LINE_Diag_PrepareResponse(uint8_t transport_channel, uint16_t request, uint
                     return false;
                 }
                 else {
-                    *size = sizeof(LINE_Diag_PowerStatus_t);
+                    *size = 4;
                     payload[0] = status->U_measured;
                     payload[1] = (status->I_operating) & 0xFF;
                     payload[2] = (status->I_operating) >> 8;
@@ -101,7 +101,7 @@ bool LINE_Diag_PrepareResponse(uint8_t transport_channel, uint16_t request, uint
                     return false;
                 }
                 uint32_t serial = diagnosticChannels[transport_channel]->serial_number();
-                *size = sizeof(uint32_t);
+                *size = 4;
                 payload[0] = (uint8_t)(serial & 0xFF);
                 payload[1] = (uint8_t)((serial >> 8) & 0xFF);
                 payload[2] = (uint8_t)((serial >> 16) & 0xFF);
@@ -117,7 +117,7 @@ bool LINE_Diag_PrepareResponse(uint8_t transport_channel, uint16_t request, uint
                     return false;
                 }
                 else {
-                    *size = sizeof(LINE_Diag_SoftwareVersion_t);
+                    *size = 4;
                     payload[0] = sw_number->major;
                     payload[1] = sw_number->minor;
                     payload[2] = sw_number->patch;
@@ -175,7 +175,9 @@ void LINE_Diag_OnRequest(uint8_t transport_channel, uint16_t request, uint8_t si
                         }
                         else if(payload[4] == assignedAddress) {
                             diagnosticChannels[i]->address = LINE_DIAG_UNICAST_UNASSIGNED_ID;
-                            // TODO: callout unassign
+                            if (diagnosticChannels[i]->on_conditional_change_address != NULL) {
+                                diagnosticChannels[i]->on_conditional_change_address(assignedAddress, LINE_DIAG_UNICAST_UNASSIGNED_ID);
+                            }
                         }
                     }
                 }

@@ -10,7 +10,8 @@ extern "C"
 #include <stdbool.h>
 
 #ifndef LINE_DIAG_CHANNEL_COUNT
-#define LINE_DIAG_CHANNEL_COUNT 1
+// TODO: rework to support dynamic number of channels
+#define LINE_DIAG_CHANNEL_COUNT 16
 #endif
 
 #ifndef LINE_DIAG_SERVICE_MAX_UNICAST_LISTENERS
@@ -53,7 +54,7 @@ extern "C"
 
 #define LINE_DIAG_POWER_STATUS_VOLTAGE(millis) (millis/100)
 #define LINE_DIAG_POWER_STATUS_OP_CURRENT(millis) (millis)
-#define LINE_DIAG_POWER_STATUS_SLEEP_CURRENT(micros) (micros / 10)
+#define LINE_DIAG_POWER_STATUS_SLEEP_CURRENT(micros) (micros)
 
 /**
  * @brief Structure representing the power status of the device.

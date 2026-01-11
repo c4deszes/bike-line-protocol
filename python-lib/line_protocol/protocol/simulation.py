@@ -84,8 +84,9 @@ class SimulatedPeripheral(LineTransportListener):
                 self.address = target[4]
                 self.on_conditional_change_address(old, self.address)
             elif self.address == target[4]:
+                old = self.address
                 self.address = LINE_DIAG_UNICAST_UNASSIGNED_ID
-                # TODO: callout unassign
+                self.on_conditional_change_address(old, self.address)
         else:
             for s in self.node.subscribes:
                 if s.id == request:

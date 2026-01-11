@@ -28,12 +28,12 @@ typedef struct {
   uint8_t* rxBuffer;
   uint8_t txBufferSize;
   uint8_t* txBuffer;
-} line_transport_inst_t;
+} LINE_Transport_Inst_t;
 
 #define LINE_TRANSPORT_INST(name, rx_size, tx_size, one_wire) \
     uint8_t name##_rx_buffer[rx_size]; \
     uint8_t name##_tx_buffer[tx_size]; \
-    static line_transport_inst_t name = { \
+    static LINE_Transport_Inst_t name = { \
         .isOneWire = (one_wire), \
         .rxBufferSize = rx_size, \
         .rxBuffer = name##_rx_buffer, \
@@ -44,7 +44,7 @@ typedef struct {
 /**
  * @brief Initializes the transport layer
  */
-void LINE_Transport_Init(uint8_t channel, line_transport_inst_t* inst);
+void LINE_Transport_Init(uint8_t channel, LINE_Transport_Inst_t* inst);
 
 /**
  * @brief Updates the transport layer state, called by the physical layer or the scheduler

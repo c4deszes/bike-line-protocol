@@ -4,11 +4,18 @@
 #include "line_api.h"
 
 {% for channel in channels %}
+LINE_TRANSPORT_INST(lt_{{channel.name}},
+                    LT_{{channel.name}}_RXBUFFER_SIZE,
+                    LT_{{channel.name}}_TXBUFFER_SIZE,
+                    LT_{{channel.name}}_WIREMODE);
+{% endfor %}
+
+{% for channel in channels %}
 {% for node in channel.nodes %}
 {% for request in node.node.publishes %}
 #ifndef LINE_REQUEST_{{request.name}}_FRAME_DEFINED
 #define LINE_REQUEST_{{request.name}}_FRAME_DEFINED
-LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+L_{{request.name}}_t L_{{request.name}};
 bool LINE_Request_{{request.name}}_flag_internal;
 #endif
 {% endfor %}
@@ -16,7 +23,7 @@ bool LINE_Request_{{request.name}}_flag_internal;
 {% for request in node.node.subscribes %}
 #ifndef LINE_REQUEST_{{request.name}}_FRAME_DEFINED
 #define LINE_REQUEST_{{request.name}}_FRAME_DEFINED
-LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+L_{{request.name}}_t L_{{request.name}};
 bool LINE_Request_{{request.name}}_flag_internal;
 #endif
 {% endfor %}
@@ -26,12 +33,12 @@ bool LINE_Request_{{request.name}}_flag_internal;
 {% for channel in channels %}
 {% for node in channel.nodes %}
     {% if node.diagnostics.enabled %}
-static LINE_Diag_Config_t LINE_DiagConfig_{{channel.name}}_{{node.node.name}} = {
-    .transport_channel = {{channel.channel}},
+static LINE_Diag_Config_t ld_{{channel.name}}_{{node.node.name}} = {
+    .transport_channel = LT_{{channel.name}}_CHANNEL,
 
     {% if node.diagnostics.initAddress is boolean %}
         {% if node.diagnostics.initAddress %}
-    .address = LINE_NODE_{{node.node.name}}_DIAG_ADDRESS,
+    .address = LD_{{node.node.name}}_ADDRESS,
         {% else %}
     .address = LINE_DIAG_UNICAST_UNASSIGNED_ID,
         {% endif %}
@@ -39,15 +46,15 @@ static LINE_Diag_Config_t LINE_DiagConfig_{{channel.name}}_{{node.node.name}} = 
     .address = {{ node.diagnostics.initAddress }},
     {% endif %}
 
-    .on_wakeup = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnWakeup,
-    .on_idle = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnIdle,
-    .on_shutdown = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnShutdown,
-    .on_conditional_change_address = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnConditionalChangeAddress,
+    .on_wakeup = ld_{{channel.name}}_{{node.node.name}}_OnWakeup,
+    .on_idle = ld_{{channel.name}}_{{node.node.name}}_OnIdle,
+    .on_shutdown = ld_{{channel.name}}_{{node.node.name}}_OnShutdown,
+    .on_conditional_change_address = ld_{{channel.name}}_{{node.node.name}}_OnConditionalChangeAddress,
 
-    .op_status = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetOperationStatus,
-    .power_status = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetPowerStatus,
-    .serial_number = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSerialNumber,
-    .software_version = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSoftwareVersion,
+    .op_status = ld_{{channel.name}}_{{node.node.name}}_GetOperationStatus,
+    .power_status = ld_{{channel.name}}_{{node.node.name}}_GetPowerStatus,
+    .serial_number = ld_{{channel.name}}_{{node.node.name}}_GetSerialNumber,
+    .software_version = ld_{{channel.name}}_{{node.node.name}}_GetSoftwareVersion,
 };
     {% endif %}
 {% endfor %}
@@ -55,10 +62,10 @@ static LINE_Diag_Config_t LINE_DiagConfig_{{channel.name}}_{{node.node.name}} = 
 
 void LINE_App_Init(void) {
     {% for channel in channels %}
-    LINE_Transport_Init({{channel.channel}}, {{'true' if channel.one_wire else 'false'}});
+    LINE_Transport_Init(LT_{{channel.name}}_CHANNEL, &lt_{{channel.name}});
     {% for node in channel.nodes %}
     {% if node.diagnostics.enabled %}
-    LINE_Diag_Init({{node.diagnostics.diag_channel}}, &LINE_DiagConfig_{{channel.name}}_{{node.node.name}});
+    LINE_Diag_Init(LD_{{node.node.name}}_CHANNEL, &ld_{{channel.name}}_{{node.node.name}});
     {% endif %}
     {% endfor %}
     {% endfor %}

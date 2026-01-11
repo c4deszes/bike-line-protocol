@@ -11,6 +11,8 @@ from line_protocol.network.schedule import (ScheduleEntry, Schedule, FixedOrderS
                        GetPowerStatusScheduleEntry, GetSerialNumberScheduleEntry,
                        GetSoftwareVersionScheduleEntry)
 
+from line_protocol.protocol.constants import *
+
 def to_int(value: str) -> int:
     if isinstance(value, int):
         return value
@@ -128,7 +130,7 @@ def load_network(path: str) -> Network:
         network.requests.append(Request(name, to_int(req['id']), to_int(req['size']), signals))
 
     for (name, nod) in data['nodes'].items():
-        node = Node(name, to_int(nod['address']))
+        node = Node(name, to_int(nod['address']) if 'address' in nod else LINE_DIAG_UNICAST_UNASSIGNED_ID)
         node.publishes = [network.get_request(x) for x in nod['publishes']]
         node.subscribes = [network.get_request(x) for x in nod['subscribes']]
         network.nodes.append(node)

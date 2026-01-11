@@ -45,6 +45,32 @@ add_test(test_TransportReceive_BufSize)
 
 ################################################################################
 
+line_codegen(
+    TARGET DiagnosticsSingleNode
+    CONFIG diagnostics/single_node_codegen.json
+    ADAPTER
+)
+add_executable(test_Diagnostics_SingleNode EXCLUDE_FROM_ALL)
+target_sources(test_Diagnostics_SingleNode PRIVATE
+    diagnostics/test_Diagnostics_SingleNode.cpp
+)
+target_link_libraries(test_Diagnostics_SingleNode PRIVATE DiagnosticsSingleNode)
+add_test(test_Diagnostics_SingleNode)
+
+line_codegen(
+    TARGET DiagnosticsMultiNode
+    CONFIG diagnostics/multi_node_codegen.json
+    ADAPTER
+)
+add_executable(test_Diagnostics_MultiNode EXCLUDE_FROM_ALL)
+target_sources(test_Diagnostics_MultiNode PRIVATE
+    diagnostics/test_Diagnostics_MultiNode.cpp
+)
+target_link_libraries(test_Diagnostics_MultiNode PRIVATE DiagnosticsMultiNode)
+add_test(test_Diagnostics_MultiNode)
+
+################################################################################
+
 # add_executable(test_ApplicationInterface EXCLUDE_FROM_ALL)
 # target_sources(test_ApplicationInterface PRIVATE
 #     ../src/application.c
@@ -52,12 +78,6 @@ add_test(test_TransportReceive_BufSize)
 # )
 # add_test(test_ApplicationInterface)
 
-# line_codegen(
-#     TARGET test_network
-#     NETWORK test_network.json
-#     NODE Peripheral_1
-#     ADAPTER
-# )
 # add_executable(test_ApplicationSignals EXCLUDE_FROM_ALL)
 # target_sources(test_ApplicationSignals PRIVATE
 #     test_ApplicationSignals.cpp
