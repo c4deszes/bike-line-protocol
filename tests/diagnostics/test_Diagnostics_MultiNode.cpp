@@ -46,6 +46,19 @@ TEST_F(TestDiagnosticsMultiNode, Broadcast_Wakeup) {
     EXPECT_EQ(ld_Network_Peripheral2_OnWakeup_fake.call_count, 1);
 }
 
+TEST_F(TestDiagnosticsMultiNode, Unicast_OpStatus_Peripheral1) {
+    ld_Network_Peripheral1_GetOperationStatus_fake.return_val = LINE_DIAG_OP_STATUS_OK;
+    BUILD_REQUEST(diag_frame, LINE_DIAG_UNICAST_ID(LINE_DIAG_REQUEST_OP_STATUS, LD_Peripheral1_ADDRESS));
+    for (int i = 0; i < sizeof(diag_frame); i++) {
+        LINE_Transport_Receive(LT_Network_CHANNEL, diag_frame[i]);
+    }
+    
+    EXPECT_EQ(LINE_Transport_WriteResponse_fake.call_count, 1);
+    EXPECT_EQ(LINE_Transport_WriteResponse_fake.arg0_val, LT_Network_CHANNEL);
+    EXPECT_EQ(LINE_Transport_WriteResponse_fake.arg1_val, 1);
+    EXPECT_EQ(LINE_Transport_WriteResponse_fake.arg2_val[0], LINE_DIAG_OP_STATUS_OK);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
