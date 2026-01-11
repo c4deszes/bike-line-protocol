@@ -83,6 +83,18 @@ target_sources(test_Application_BytePacking PRIVATE
 target_link_libraries(test_Application_BytePacking PRIVATE ApplicationBytePackingSingleNode)
 add_test(test_Application_BytePacking)
 
+line_codegen(
+    TARGET ApplicationFlowTest
+    CONFIG application/flow_test_codegen.json
+    ADAPTER
+)
+add_executable(test_Application_Flow EXCLUDE_FROM_ALL)
+target_sources(test_Application_Flow PRIVATE
+    application/test_Application_Flow.cpp
+)
+target_link_libraries(test_Application_Flow PRIVATE ApplicationFlowTest)
+add_test(test_Application_Flow)
+
 # add_executable(test_ApplicationInterface EXCLUDE_FROM_ALL)
 # target_sources(test_ApplicationInterface PRIVATE
 #     ../src/application.c

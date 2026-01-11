@@ -35,7 +35,8 @@
                 "test_TransportReceive_BufSize",
                 "test_Diagnostics_SingleNode",
                 "test_Diagnostics_MultiNode",
-                "test_Application_BytePacking"
+                "test_Application_BytePacking",
+                "test_Application_Flow"
             ]
         },
         {

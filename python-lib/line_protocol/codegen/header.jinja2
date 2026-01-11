@@ -84,35 +84,38 @@ extern L_{{request.name}}_t L_{{request.name}};
 #define L_{{request.name}}_ID 0x{{'%04X' % request.id}}
 #define L_{{request.name}}_SIZE {{request.size}}
 
-typedef union {
-    struct {
-    {%- set position = namespace(value=0) -%}
-    {% for signal in request.signals|sort(attribute='offset') -%}
-        {% if signal.offset > position.value -%}
-        unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
-        {% endif %}
-        
-        {%- if signal.width <= 8 %}
-        uint8_t {{signal.name}} : {{signal.width}};
-        {%- elif signal.width <= 16 %}
-        uint16_t {{signal.name}} : {{signal.width}};
-        {%- elif signal.width <= 32 %}
-        uint32_t {{signal.name}} : {{signal.width}};
-        {% endif %}
+typedef struct {
+    union {
+        struct __attribute__((packed)) {
+        {%- set position = namespace(value=0) -%}
+        {% for signal in request.signals|sort(attribute='offset') -%}
+            {% if signal.offset > position.value -%}
+            unsigned int reserved_{{loop.index}} : {{signal.offset - position.value}};
+            {% endif %}
+            
+            {%- if signal.width <= 8 %}
+            uint8_t {{signal.name}} : {{signal.width}};
+            {%- elif signal.width <= 16 %}
+            uint16_t {{signal.name}} : {{signal.width}};
+            {%- elif signal.width <= 32 %}
+            uint32_t {{signal.name}} : {{signal.width}};
+            {% endif %}
 
-        {%- set position.value = position.value + signal.width -%}
-    {%- endfor %}
-    {%- if position.value < request.size * 8 %}
-        unsigned int _end : {{request.size * 8 - position.value}};
-    {%- endif %}
-    } fields;
-    uint8_t data[{{request.size}}];
+            {%- set position.value = position.value + signal.width -%}
+        {%- endfor %}
+        {%- if position.value < request.size * 8 %}
+            unsigned int _end : {{request.size * 8 - position.value}};
+        {%- endif %}
+        } fields;
+        uint8_t bytes[{{request.size}}];
+    } data;
+    bool flag;
 } L_{{request.name}}_t;
 
 // TODO: verify union length
 // assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
 
-extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
+extern L_{{request.name}}_t L_{{request.name}};
 
 #endif
 {% endfor %}
