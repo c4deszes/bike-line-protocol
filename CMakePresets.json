@@ -34,7 +34,8 @@
                 "test_TransportReceive_Multiple",
                 "test_TransportReceive_BufSize",
                 "test_Diagnostics_SingleNode",
-                "test_Diagnostics_MultiNode"
+                "test_Diagnostics_MultiNode",
+                "test_Application_BytePacking"
             ]
         },
         {

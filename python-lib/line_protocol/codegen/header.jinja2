@@ -40,10 +40,10 @@ LINE_Diag_SoftwareVersion_t* ld_{{channel.name}}_{{node.node.name}}_GetSoftwareV
 #define L_{{request.name}}_ID 0x{{'%04X' % request.id}}
 #define L_{{request.name}}_SIZE {{request.size}}
 
-struct {
-    boolean enabled;
+typedef struct {
+    bool enabled;
     union {
-        struct {
+        struct __attribute__((packed)) {
         {%- set position = namespace(value=0) -%}
         {% for signal in request.signals|sort(attribute='offset') -%}
             {% if signal.offset > position.value -%}
@@ -64,9 +64,9 @@ struct {
             unsigned int _end : {{request.size * 8 - position.value}};
         {%- endif %}
         } signals;
-        uint8_t data[{{request.size}}];
+        uint8_t bytes[{{request.size}}];
     } data;
-    boolean flag;
+    bool flag;
 } L_{{request.name}}_t;
 
 // TODO: verify union length
@@ -107,14 +107,13 @@ typedef union {
     {%- endif %}
     } fields;
     uint8_t data[{{request.size}}];
-} LINE_Frame_{{request.name}}_t;
+} L_{{request.name}}_t;
 
 // TODO: verify union length
 // assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
 
 extern LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
 
-bool LINE_Request_{{request.name}}_flag(void);
 #endif
 {% endfor %}
 

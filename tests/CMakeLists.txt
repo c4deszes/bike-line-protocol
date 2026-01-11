@@ -71,6 +71,18 @@ add_test(test_Diagnostics_MultiNode)
 
 ################################################################################
 
+line_codegen(
+    TARGET ApplicationBytePackingSingleNode
+    CONFIG application/single_node_codegen.json
+    ADAPTER
+)
+add_executable(test_Application_BytePacking EXCLUDE_FROM_ALL)
+target_sources(test_Application_BytePacking PRIVATE
+    application/test_Application_BytePacking.cpp
+)
+target_link_libraries(test_Application_BytePacking PRIVATE ApplicationBytePackingSingleNode)
+add_test(test_Application_BytePacking)
+
 # add_executable(test_ApplicationInterface EXCLUDE_FROM_ALL)
 # target_sources(test_ApplicationInterface PRIVATE
 #     ../src/application.c
