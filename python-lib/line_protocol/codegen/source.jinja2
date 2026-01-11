@@ -67,6 +67,20 @@ void LINE_App_Init(void) {
     {% endif %}
     {% endfor %}
     {% endfor %}
+
+    // TODO: implement signal initialization
+
+    {% for channel in channels %}
+    {% for node in channel.nodes %}
+    {% for request in node.node.publishes %}
+    L_{{request.name}}.enabled = true;
+    L_{{request.name}}.flag = false;
+    {% endfor %}
+    {% for request in node.node.subscribes %}
+    L_{{request.name}}.flag = false;
+    {% endfor %}
+    {% endfor %}
+    {% endfor %}
 }
 
 void LINE_App_OnRequest(uint8_t channel, uint16_t request, uint8_t size, uint8_t* payload) {
@@ -95,7 +109,7 @@ bool LINE_App_RespondsTo(uint8_t channel, uint16_t request) {
     {% for channel in channels %}
     {% for node in channel.nodes %}
     {%- for request in node.node.publishes %}
-    if (channel == LT_{{channel.name}}_CHANNEL && request == L_{{request.name}}_ID) {
+    if (channel == LT_{{channel.name}}_CHANNEL && request == L_{{request.name}}_ID && L_{{request.name}}.enabled) {
         return true;
     }
     {% endfor %}
@@ -110,7 +124,7 @@ bool LINE_App_PrepareResponse(uint8_t channel, uint16_t request, uint8_t* size, 
     {%- for request in node.node.publishes %}
     #ifndef LINE_REQUEST_{{request.name}}_PREPARERESPONSE_HANDLED
     #define LINE_REQUEST_{{request.name}}_PREPARERESPONSE_HANDLED
-    if (channel == LT_{{channel.name}}_CHANNEL && request == L_{{request.name}}_ID) {
+    if (channel == LT_{{channel.name}}_CHANNEL && request == L_{{request.name}}_ID && L_{{request.name}}.enabled) {
         *size = L_{{request.name}}_SIZE;
         for (int i = 0; i < L_{{request.name}}_SIZE; i++) {
             payload[i] = L_{{request.name}}.data.bytes[i];
