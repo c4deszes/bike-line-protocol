@@ -90,8 +90,8 @@ def main():
             channel = Channel(
                 name=name,
                 channel=int(props['channel']),
-                rx_buffer_size=int(props['rxBufferSize']),
-                tx_buffer_size=int(props['txBufferSize']),
+                rx_buffer_size=int(props.get('rxBufferSize', 255)),
+                tx_buffer_size=int(props.get('txBufferSize', 255)),
                 one_wire=bool(props['oneWire']),
                 network=network,
                 nodes=nodes

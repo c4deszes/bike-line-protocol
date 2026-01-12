@@ -1,7 +1,6 @@
 {
     "name": "TestNetwork",
     "baudrate": 19200,
-    "oneWire": false,
     "master": "Main",
     "nodes": {
         "Main": {
