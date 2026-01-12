@@ -25,7 +25,8 @@
                 "ms-python.debugpy",
                 "njpwerner.autodocstring",
                 "trond-snekvik.simple-rst",
-                "lextudio.restructuredtext"
+                "lextudio.restructuredtext",
+                "github.vscode-github-actions"
             ],
             "settings": {
                 "python.defaultInterpreterPath": "/usr/local/bin/python",
