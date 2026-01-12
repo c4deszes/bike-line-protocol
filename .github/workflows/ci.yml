@@ -80,7 +80,7 @@ jobs:
       
       - name: Run tests
         working-directory: python-lib
-        run: python -m pytest --cov=line_protocol --cov-report=xml
+        run: python -m pytest
 
       - name: Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
