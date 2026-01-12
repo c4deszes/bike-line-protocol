@@ -37,16 +37,26 @@ class NodeStatus():
 
 @dataclass
 class RxRequest():
+    """
+    Request, used to make a request on the bus.
+    """
     request: int
 
 @dataclass
 class TxRequest():
+    """
+    Transmission request, request contains the request code, data and optional checksum.
+    Checksum is automatically calculated if not provided.
+    """
     request: int
     data: List[int]
     checksum: int | None = None
 
 @dataclass
 class TransmitEvent():
+    """
+    Event representing a transmission on the bus.
+    """
     frame: TxRequest | RxRequest
     event_id: int
     event: Event
@@ -83,8 +93,7 @@ class UserRequest:
         self.last_timestamp: float | None = None
         self.request = request
         self.exception: Exception | None = None
-        # TODO: set phy and raw values to initial values
-        self.signals = SignalValueContainer([SignalValue(signal, signal.initial, 0) for signal in request.signals])
+        self.signals = SignalValueContainer([SignalValue(signal, signal.initial, signal.encoder.encode(signal.initial)) for signal in request.signals])
 
     def reset(self):
         """
