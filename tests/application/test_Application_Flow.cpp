@@ -62,6 +62,20 @@ TEST_F(TestApplicationFlow, SetFrame_Update) {
     EXPECT_EQ(l_Set.flag, true);
 }
 
+TEST_F(TestApplicationFlow, GeneralUse) {
+    BUILD_FRAME(request_frame, L_Set_ID, 0xAA, 0xBB, 0xCC);
+
+    for (int i = 0; i < sizeof(request_frame); i++) {
+        LINE_Transport_Receive(LT_Network_CHANNEL, request_frame[i]);
+    }
+
+    EXPECT_EQ(l_rd_Set_First(), 0xAA);
+    EXPECT_EQ(l_rd_Set_Second(), 0xCCBB);
+    EXPECT_EQ(l_flg_tst_Set(), true);
+    l_flg_clr_Set();
+    EXPECT_EQ(l_flg_tst_Set(), false);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

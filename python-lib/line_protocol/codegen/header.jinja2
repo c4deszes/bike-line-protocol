@@ -72,6 +72,14 @@ typedef struct {
 // TODO: verify union length
 // assert sizeof(L_{{request.name}}_t == {{request.size}})
 
+{% for signal in request.signals|sort(attribute='offset') -%}
+#define l_wr_{{request.name}}_{{signal.name}}(value) l_{{request.name}}.data.signals.{{signal.name}} = (value)
+#define l_rd_{{request.name}}_{{signal.name}}() (l_{{request.name}}.data.signals.{{signal.name}})
+{% endfor %}
+
+#define l_flg_tst_{{request.name}}() (l_{{request.name}}.flag)
+#define l_flg_clr_{{request.name}}() (l_{{request.name}}.flag = false)
+
 extern L_{{request.name}}_t l_{{request.name}};
 
 
@@ -106,7 +114,7 @@ typedef struct {
         {%- if position.value < request.size * 8 %}
             unsigned int _end : {{request.size * 8 - position.value}};
         {%- endif %}
-        } fields;
+        } signals;
         uint8_t bytes[{{request.size}}];
     } data;
     bool flag;
@@ -114,6 +122,14 @@ typedef struct {
 
 // TODO: verify union length
 // assert sizeof(LINE_{{request.name}}_Frame_t == {{request.size}})
+
+{% for signal in request.signals|sort(attribute='offset') -%}
+#define l_wr_{{request.name}}_{{signal.name}}(value) l_{{request.name}}.data.signals.{{signal.name}} = (value)
+#define l_rd_{{request.name}}_{{signal.name}}() (l_{{request.name}}.data.signals.{{signal.name}})
+{% endfor %}
+
+#define l_flg_tst_{{request.name}}() (l_{{request.name}}.flag)
+#define l_flg_clr_{{request.name}}() (l_{{request.name}}.flag = false)
 
 extern L_{{request.name}}_t l_{{request.name}};
 
