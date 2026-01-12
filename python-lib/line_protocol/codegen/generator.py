@@ -13,16 +13,6 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from line_protocol.network import Network, load_network, Node
 
 @dataclass
-class Channel:
-    name: str
-    channel: int
-    rx_buffer_size: int
-    tx_buffer_size: int
-    one_wire: bool
-    network: Network
-    nodes: list[NodeSettings]
-
-@dataclass
 class DiagnosticSettings:
     diag_channel: int
     enabled: bool
@@ -33,6 +23,16 @@ class NodeSettings:
     node: Node
     enabled: bool
     diagnostics: DiagnosticSettings
+
+@dataclass
+class Channel:
+    name: str
+    channel: int
+    rx_buffer_size: int
+    tx_buffer_size: int
+    one_wire: bool
+    network: Network
+    nodes: list[NodeSettings]
 
 def codegen(channels: list[Channel], output_path: str):
     env = Environment(
