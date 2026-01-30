@@ -6,6 +6,7 @@ from threading import Event, Thread
 from queue import Queue, Empty
 from enum import Enum
 from dataclasses import dataclass
+from urllib import request
 
 # Local imports
 from line_protocol.protocol.constants import *
@@ -324,51 +325,47 @@ class LineMaster():
             self._user_requests[request].exception = exception
             self._user_requests[request].last_timestamp = timestamp
 
-    def _do_transmit(self, event: TransmitEvent) -> None:
-        timestamp = time.time()
-
-        # Send the data on the transport layer
-        if self.transport is not None:
-            self.transport.send_data(event.frame.request, event.frame.data, event.frame.checksum)
-
-        # TODO: process the response
-        # e.g. if the request is a peripheral request then decode it and notify listeners
-
-        self.virtual_bus.on_request_complete(event.frame.request, event.frame.data)
-
-        # Notify the listeners that the request was made
-        # TODO: implement
-
-        event.timestamp = timestamp
-        #event.response = ??
-        #event.signals = ??
-        #event.exception = ??
-        event.event.set()
-
     def _do_receive(self, event: TransmitEvent) -> None:
         timestamp = time.time()
-        vbus_response = self.virtual_bus.on_request(event.frame.request)
         response = None
         exception = None
 
-        if vbus_response is not None:
-            # If the virtual bus has a response then send that over the transport
+        if isinstance(event.frame, TxRequest):
+            logger.debug("TX REQ 0x%04X LEN=%d DATA=%s CHK=%s",
+                         event.frame.request, len(event.frame.data),
+                         event.frame.data, 'ok' if event.frame.checksum is None else hex(event.frame.checksum))
+
             if self.transport is not None:
-                self.transport.send_data(event.frame.request, vbus_response)
+                self.transport.send_data(event.frame.request, event.frame.data, event.frame.checksum)
 
-            response = vbus_response
+            response = event.frame.data
         else:
-            try:
-                if self.transport is not None:
-                    # Send the request on the transport layer
-                    response = self.transport.request_data(event.frame.request)
-                else:
-                    raise LineTransportTimeout("No bus response.")
+            logger.debug("TX REQ 0x%04X", event.frame.request)
+            vbus_response = self.virtual_bus.on_request(event.frame.request)
 
-            except LineTransportError as e:
-                exception = e
+            if vbus_response is not None:
+                logger.debug("RX (virtual) DATA=%s", vbus_response)
+                # If the virtual bus has a response then send that over the transport
+                if self.transport is not None:
+                    self.transport.send_data(event.frame.request, vbus_response)
+
+                response = vbus_response
+            else:
+                try:
+                    if self.transport is not None:
+                        # Send the request on the transport layer
+                        response = self.transport.request_data(event.frame.request)
+                        logger.debug("RX LEN=%d DATA=%s", len(response), response)
+                    else:
+                        raise LineTransportTimeout("No bus response.")
+
+                except LineTransportError as e:
+                    exception = e
 
         if exception is None:
+            # Notify every virtual bus member that the request is complete
+            self.virtual_bus.on_request_complete(event.frame.request, response)
+
             if event.frame.request >= LINE_DIAG_UNICAST_REQUEST_ID_MIN and \
                 event.frame.request <= LINE_DIAG_UNICAST_REQUEST_ID_MAX:
                 self._process_unicast_request(timestamp, event.frame.request, response)
@@ -379,15 +376,14 @@ class LineMaster():
             else:
                 logger.warning("Skipping processing for frame id 0x%04X (out of range)", event.frame.request)
 
-            # Notify every virtual bus member that the request is complete
-            self.virtual_bus.on_request_complete(event.frame.request, response)
-
             # Notify the listeners that the request was made
             if event.frame.request in self._user_requests:
                 for listener in self._request_listeners:
                     listener.on_user_request(timestamp, self._user_requests[event.frame.request].request,
                                             response, self._user_requests[event.frame.request].signals)
         else:
+            logger.error("Error during request 0x%04X: %s", event.frame.request, str(exception))
+
             self.virtual_bus.on_error(event.frame.request, exception)
 
             self._process_user_request_error(timestamp, event.frame.request, exception)
@@ -406,10 +402,7 @@ class LineMaster():
         while self._running:
             try:
                 event = self._queue.get(timeout=1)
-                if isinstance(event.frame, TxRequest):
-                    self._do_transmit(event)
-                else:
-                    self._do_receive(event)
+                self._do_receive(event)
             except Empty as exc:
                 pass
 
