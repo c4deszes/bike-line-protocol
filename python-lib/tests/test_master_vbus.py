@@ -4,13 +4,10 @@ import pytest
 import time
 
 from line_protocol.network import load_network
-from line_protocol.protocol.master import LineMaster, LineTransportTimeout
+from line_protocol.network.request import SignalValueContainer
+from line_protocol.protocol.master import LineMaster, LineTransportTimeout, RequestListener, NodeStatusListener, NodeStatusProperty
 from line_protocol.protocol.simulation import SimulatedPeripheral
-
-@pytest.fixture
-def master():
-    """Fixture to create a LineMaster instance."""
-    return LineMaster()
+from unittest.mock import Mock
 
 class TestLineMaster_VirtualBus_Raw:
 
@@ -42,6 +39,9 @@ class TestLineMaster_VirtualBus_Network:
     @pytest.fixture()
     def peripheral(self, network):
         peripheral = SimulatedPeripheral(network.get_node('RotorSensor'))
+        peripheral.op_status = 'Ok'
+        peripheral.software_version = '1.0.0'
+        peripheral.serial_number = 0x12345678
         yield peripheral
 
     @pytest.fixture()
@@ -143,3 +143,75 @@ class TestLineMaster_VirtualBus_Scheduling:
         master.enable_schedule("RotorSensorSchedule")
         time.sleep(5)
         master.disable_schedule()
+
+class TestLineMaster_VirtualBus_Listeners:
+
+    @pytest.fixture()
+    def network(self):
+        yield load_network('tests/data/network-1.json')
+
+    @pytest.fixture()
+    def peripheral(self, network):
+        peripheral = SimulatedPeripheral(network.get_node('RotorSensor'))
+        peripheral.op_status = 'Ok'
+        peripheral.software_version = '1.0.0'
+        peripheral.serial_number = 0x12345678
+        yield peripheral
+
+    @pytest.fixture()
+    def node_status_listener(self):
+        yield Mock(spec=NodeStatusListener)
+
+    @pytest.fixture()
+    def request_listener(self):
+        yield Mock(spec=RequestListener)
+
+    @pytest.fixture()
+    def master(self, network, node_status_listener, request_listener, peripheral):
+        with LineMaster(network=network) as master:
+            master.virtual_bus.add(peripheral)
+            master.add_node_status_listener(node_status_listener)
+            master.add_request_listener(request_listener)
+            yield master
+
+    def test_NodeStatusListener_OperationStatus(self, master, node_status_listener):
+        master.get_operation_status(node='RotorSensor', wait=True, timeout=1)
+        
+        assert node_status_listener.on_node_change.called
+        assert node_status_listener.on_node_change.call_args.args[1].address == 0x01
+        assert node_status_listener.on_node_change.call_args.args[1].name == 'RotorSensor'
+        assert node_status_listener.on_node_change.call_args.args[2].op_status == 'Ok'
+        assert node_status_listener.on_node_change.call_args.args[3] == NodeStatusProperty.OP_STATUS
+
+    def test_NodeStatusListener_SoftwareVersion(self, master, node_status_listener):
+        master.get_software_version(node='RotorSensor', wait=True, timeout=1)
+
+        assert node_status_listener.on_node_change.called
+        assert node_status_listener.on_node_change.call_args.args[1].address == 0x01
+        assert node_status_listener.on_node_change.call_args.args[1].name == 'RotorSensor'
+        assert node_status_listener.on_node_change.call_args.args[2].software_version == '1.0.0'
+        assert node_status_listener.on_node_change.call_args.args[3] == NodeStatusProperty.SOFTWARE_VERSION
+
+    def test_NodeStatusListener_SerialNumber(self, master, node_status_listener):
+        master.get_serial_number(node='RotorSensor', wait=True, timeout=1)
+
+        assert node_status_listener.on_node_change.called
+        assert node_status_listener.on_node_change.call_args.args[1].address == 0x01
+        assert node_status_listener.on_node_change.call_args.args[1].name == 'RotorSensor'
+        assert node_status_listener.on_node_change.call_args.args[2].serial_number == 0x12345678
+        assert node_status_listener.on_node_change.call_args.args[3] == NodeStatusProperty.SERIAL_NUMBER
+
+    def test_RequestListener(self, master, network, request_listener, peripheral):
+        peripheral.connected = True
+        peripheral.requests.WheelSpeed.FrontSpeed = 15
+        peripheral.requests.WheelSpeed.RearSpeed = 14
+        master.request("WheelSpeed", wait=True, timeout=1)
+
+        assert request_listener.on_user_request.called
+        assert isinstance(request_listener.on_user_request.call_args.args[0], float)
+        assert request_listener.on_user_request.call_args.args[1] == master.network.get_request('WheelSpeed')
+        assert isinstance(request_listener.on_user_request.call_args.args[2], list)
+        assert len(request_listener.on_user_request.call_args.args[2]) == network.get_request('WheelSpeed').size
+        #assert request_listener.on_user_request.call_args.args[2] == master.
+        assert isinstance(request_listener.on_user_request.call_args.args[3], SignalValueContainer)
+        assert request_listener.on_user_request.call_args.args[3].get_signal('FrontSpeed').phy -15 < 0.1

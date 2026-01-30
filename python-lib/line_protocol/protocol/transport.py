@@ -33,11 +33,11 @@ class LineTrafficListener():
     Interface for listening to traffic events
     """
 
-    def on_request(self, timestamp, request: int, size: int, data: List[int], checksum: int):
+    def on_request(self, timestamp: float, request: int, size: int, data: List[int], checksum: int):
         """Called when a complete request is received"""
         raise NotImplementedError()
 
-    def on_error(self, timestamp, request: int, error_type: str):
+    def on_error(self, timestamp: float, request: int, error: LineTransportError):
         """Called when an error occurs on the bus"""
         raise NotImplementedError()
 
@@ -65,7 +65,6 @@ class LineSerialTransport():
         self.port = port
         self.baudrate = baudrate
         self.one_wire = one_wire
-        self.traffic_listeners = []
         self._serial = serial.Serial(None, self.baudrate, timeout=0.001)
 
     def __enter__(self) -> 'LineSerialTransport':
@@ -73,13 +72,10 @@ class LineSerialTransport():
         self._serial.open()
         return self
 
-    def add_listener(self, listener: LineTrafficListener):
-        self.traffic_listeners.append(listener)
-
     def request_data(self, request: int) -> List[int]:
         header = create_header(request)
         self._serial.write(header)
-        logger.debug("TX REQ 0x%04X", request)
+        #logger.debug("TX REQ 0x%04X", request)
 
         if self.one_wire:
             received = 0
@@ -90,7 +86,7 @@ class LineSerialTransport():
                 if len(data) == 1:
                     received += 1
                 if time.time() - start > 1.0:
-                    logger.error('RX No self response received!')
+                    #logger.error('RX No self response received!')
                     raise LineTransportTimeout("Self response timeout.")
 
         start = time.time()
@@ -102,9 +98,7 @@ class LineSerialTransport():
                 break
 
         if size is None:
-            logger.error('RX Timeout!')
-            for traffic_listener in self.traffic_listeners:
-                traffic_listener.on_error(start, request, 'timeout')
+            #logger.error('RX Timeout!')
             raise LineTransportTimeout()
 
         data = []
@@ -115,9 +109,7 @@ class LineSerialTransport():
                 start = time.time()
 
         if len(data) != size:
-            logger.error('RX Timeout! LEN=%d DATA=%s', size, data)
-            for traffic_listener in self.traffic_listeners:
-                traffic_listener.on_error(start, request, 'incomplete-response')
+            #logger.error('RX Timeout! LEN=%d DATA=%s', size, data)
             raise LineTransportTimeout()
 
         checksum = None
@@ -129,22 +121,14 @@ class LineSerialTransport():
                 break
 
         if checksum is None:
-            logger.debug("RX LEN=%d DATA=%s", size, data)
-            logger.error('RX Timeout! No checksum received.')
-            for traffic_listener in self.traffic_listeners:
-                traffic_listener.on_error(start, request, 'incomplete-response')
-            raise LineTransportTimeout()
+            #logger.debug("RX LEN=%d DATA=%s", size, data)
+            #logger.error('RX Timeout! No checksum received.')
+            raise LineTransportTimeout('Missing checksum.')
 
-        logger.debug("RX LEN=%d DATA=%s CHK=%02X", size, data, checksum)
-
+        #logger.debug("RX LEN=%d DATA=%s CHK=%02X", size, data, checksum)
         if data_checksum(data) != checksum:
-            logger.error('RX Checksum error!')
-            for traffic_listener in self.traffic_listeners:
-                traffic_listener.on_error(start, request, 'checksum error')
+            #logger.error('RX Checksum error!')
             raise LineTransportDataError('Invalid checksum.')
-
-        for traffic_listener in self.traffic_listeners:
-            traffic_listener.on_request(start, request, size, data, checksum)
 
         return data
 
@@ -152,16 +136,13 @@ class LineSerialTransport():
         frame = create_frame(request, data, checksum)
 
         self._serial.write(frame)
-        logger.debug("TX REQ 0x%04X LEN=%d DATA=%s CHK=%s",
-                     request, len(data), data, 'ok' if checksum is None else hex(checksum))
+        #logger.debug("TX REQ 0x%04X LEN=%d DATA=%s CHK=%s",
+        #             request, len(data), data, 'ok' if checksum is None else hex(checksum))
 
         time.sleep(0.1)
 
         if self.one_wire:
             self._serial.read(len(frame))
-
-        for traffic_listener in self.traffic_listeners:
-            traffic_listener.on_request(time.time(), request, len(data), data, checksum)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._serial.close()

@@ -1,14 +1,15 @@
+# System imports
 import time
 import logging
-
 from typing import Union, Dict, List
 from threading import Event, Thread
 from queue import Queue, Empty
 from enum import Enum
 from dataclasses import dataclass
 
+# Local imports
 from line_protocol.protocol.constants import *
-from line_protocol.protocol.transport import LineSerialTransport, LineTransportTimeout
+from line_protocol.protocol.transport import LineSerialTransport, LineTransportTimeout, LineTransportError
 from line_protocol.protocol.virtual_bus import VirtualBus
 from line_protocol.network import (Network, Request, SignalValueContainer, SignalValue, NodeRef,
                                    ScheduleExecutor, Schedule)
@@ -30,10 +31,17 @@ class NodeStatus():
     """
     Status of a node, contains the operation status, power status, serial number and software version.
     """
+    _name: str | None
     op_status: OperationStatus | None
     power_status: PowerStatus | None
     serial_number: int | None
     software_version: str | None
+
+    def reset(self):
+        self.op_status = None
+        self.power_status = None
+        self.serial_number = None
+        self.software_version = None
 
 @dataclass
 class RxRequest():
@@ -61,6 +69,7 @@ class TransmitEvent():
     event_id: int
     event: Event
 
+    # These will be filled in when the event is processed
     timestamp: float | None
     response: List[int] | None
     signals: SignalValueContainer | None
@@ -90,18 +99,26 @@ class UserRequest:
     """
 
     def __init__(self, request: Request) -> None:
-        self.last_timestamp: float | None = None
         self.request = request
+        self.last_timestamp: float | None = None
+        self.buffer = self.request.encode({})
+        self.signals = SignalValueContainer([SignalValue(signal,
+                                                         signal.initial,
+                                                         signal.encoder.encode(signal.initial))
+                                             for signal in request.signals])
         self.exception: Exception | None = None
-        self.signals = SignalValueContainer([SignalValue(signal, signal.initial, signal.encoder.encode(signal.initial)) for signal in request.signals])
 
     def reset(self):
         """
         Resets the request to its initial state.
         """
         self.last_timestamp = None
-        # TODO: set phy and raw values to initial values
-        self.signals = SignalValueContainer([SignalValue(signal, signal.initial, 0) for signal in self.request.signals])
+        self.buffer = self.request.encode({})
+        self.signals = SignalValueContainer([SignalValue(signal,
+                                                         signal.initial,
+                                                         signal.encoder.encode(signal.initial))
+                                             for signal in self.request.signals])
+        self.exception = None
     
 class RequestListener:
     """
@@ -109,7 +126,8 @@ class RequestListener:
     occurs. It should implement the on_request and on_error methods.
     """
 
-    def on_user_request(self, timestamp: float, request: Request, signals: SignalValueContainer) -> None:
+    # TODO: add raw buffer
+    def on_user_request(self, timestamp: float, request: Request, buffer: List[int], signals: SignalValueContainer) -> None:
         """
         Called when a request is made. The listener should process the request and signals.
 
@@ -117,21 +135,22 @@ class RequestListener:
         :type timestamp: float
         :param request: The request that was made
         :type request: Request
+        :param buffer: Raw buffer that was received
+        :type buffer: List[int]
         :param signals: Signals that were received with the request
         :type signals: SignalValueContainer
         """
         raise NotImplementedError()
 
-    # TODO: standardize error types
-    def on_error(self, timestamp: float, request: Request, error_type):
+    def on_error(self, timestamp: float, request: Request, error: LineTransportError):
         """
         Called when an error occurs during the request. The listener should handle the error.
         :param timestamp: Timestamp of the error
         :type timestamp: float
         :param request: The request that caused the error
         :type request: Request
-        :param error_type: Type of the error, e.g. 'transport_error', 'checksum_error', etc.
-        :type error_type: str
+        :param error: The error that occurred
+        :type error: LineTransportError
         """
         raise NotImplementedError()
     
@@ -165,23 +184,24 @@ class LineMaster():
         self.transport = transport
         self.network = network
         self.virtual_bus = VirtualBus()
+
         # Master thread
         self._queue: 'Queue[TransmitEvent]' = Queue(maxsize=0)
         self._event_id = 0
         self._running = False
-
-        # Schedule thread
-        self._schedule_running: bool = False
-        self._schedule_thread: Thread | None = None
-        self._active_schedule: ScheduleExecutor | None = None
 
         # Status buffers
         self._user_requests: Dict[int, UserRequest] = {}
         self._node_status: Dict[int, NodeStatus] = {}
 
         # Listeners
-        self.request_listeners: List[RequestListener] = []
-        self.node_status_listeners: List[NodeStatusListener] = []
+        self._request_listeners: List[RequestListener] = []
+        self._node_status_listeners: List[NodeStatusListener] = []
+
+        # Schedule thread
+        self._schedule_running: bool = False
+        self._schedule_thread: Thread | None = None
+        self._active_schedule: ScheduleExecutor | None = None
 
     def reset_user_requests(self):
         """
@@ -197,18 +217,17 @@ class LineMaster():
         or when the network configuration changes.
         """
         for node in self._node_status.values():
-            node.op_status = None
-            node.power_status = None
-            node.serial_number = None
-            node.software_version = None
+            node.reset()
+
+        timestamp = time.time()
 
         # Notify all listeners that the node statuses have been reset
         for node_id, node_status in self._node_status.items():
-            for listener in self.node_status_listeners:
-                listener.on_node_change(time.time(), NodeRef("Unset", node_id), node_status, NodeStatusProperty.OP_STATUS)
-                listener.on_node_change(time.time(), NodeRef("Unset", node_id), node_status, NodeStatusProperty.POWER_STATUS)
-                listener.on_node_change(time.time(), NodeRef("Unset", node_id), node_status, NodeStatusProperty.SERIAL_NUMBER)
-                listener.on_node_change(time.time(), NodeRef("Unset", node_id), node_status, NodeStatusProperty.SOFTWARE_VERSION)
+            for listener in self._node_status_listeners:
+                listener.on_node_change(timestamp, NodeRef(node_status._name, node_id), node_status, NodeStatusProperty.OP_STATUS)
+                listener.on_node_change(timestamp, NodeRef(node_status._name, node_id), node_status, NodeStatusProperty.POWER_STATUS)
+                listener.on_node_change(timestamp, NodeRef(node_status._name, node_id), node_status, NodeStatusProperty.SERIAL_NUMBER)
+                listener.on_node_change(timestamp, NodeRef(node_status._name, node_id), node_status, NodeStatusProperty.SOFTWARE_VERSION)
 
     def add_request_listener(self, listener: RequestListener):
         """
@@ -217,7 +236,7 @@ class LineMaster():
         :param listener: The listener to add
         :type listener: RequestListener
         """
-        self.request_listeners.append(listener)
+        self._request_listeners.append(listener)
 
     def add_node_status_listener(self, listener: NodeStatusListener):
         """
@@ -226,14 +245,21 @@ class LineMaster():
         :param listener: The listener to add
         :type listener: NodeStatusListener
         """
-        self.node_status_listeners.append(listener)
+        self._node_status_listeners.append(listener)
 
     def _setup(self):
         if self.network is not None:
             for request in self.network.requests:
                 self._user_requests[request.id] = UserRequest(request)
 
-        self._node_status = {x: NodeStatus(None, None, None, None) for x in range(0, LINE_DIAG_UNICAST_BROADCAST_ID)}
+        for node_id in range(LINE_DIAG_UNICAST_UNASSIGNED_ID + 1, LINE_DIAG_UNICAST_BROADCAST_ID):
+            node_name = "Unset"
+            try:
+                if self.network is not None:
+                    node_name = self.network.get_node_by_address(node_id).name
+            except LookupError:
+                pass
+            self._node_status[node_id] = NodeStatus(node_name, None, None, None, None)
 
     def __enter__(self):
         self._setup()
@@ -243,38 +269,55 @@ class LineMaster():
         self._thread.start()
         return self
 
-    def _process_diagnostic_request(self, request: int, data: List[int]) -> None:
-        """
-        Processes a diagnostic request and updates the node status accordingly.
-        This method is called when a diagnostic request is received from the transport layer.
-        """
-        # TODO: resolve node name
-        if (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_OP_STATUS:
-            node_id = request & LINE_DIAG_UNICAST_ID_MASK
-            self._node_status[node_id].op_status = op_status_str(data[0])
-            for listener in self.node_status_listeners:
-                listener.on_node_change(time.time(), NodeRef("Unset", node_id), self._node_status[node_id], NodeStatusProperty.OP_STATUS)
-        elif (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_POWER_STATUS:
-            node_id = request & LINE_DIAG_UNICAST_ID_MASK
-            self._node_status[node_id].power_status = PowerStatus(data[0] / 10.0, data[1], data[2])
-            for listener in self.node_status_listeners: 
-                listener.on_node_change(time.time(), NodeRef("Unset", node_id), self._node_status[node_id], NodeStatusProperty.POWER_STATUS)
-        elif (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_SERIAL_NUMBER:
-            node_id = request & LINE_DIAG_UNICAST_ID_MASK
-            self._node_status[node_id].serial_number = int.from_bytes(data[0:4], 'little')
-            for listener in self.node_status_listeners:
-                listener.on_node_change(time.time(), NodeRef("Unset", node_id), self._node_status[node_id], NodeStatusProperty.SERIAL_NUMBER)
-        elif (request & LINE_DIAG_UNICAST_REQUEST_ID_MASK) == LINE_DIAG_REQUEST_SW_NUMBER:
-            node_id = request & LINE_DIAG_UNICAST_ID_MASK
-            self._node_status[node_id].software_version = f"{data[0]}.{data[1]}.{data[2]}"
-            for listener in self.node_status_listeners:
-                listener.on_node_change(time.time(), NodeRef("Unset", node_id), self._node_status[node_id], NodeStatusProperty.SOFTWARE_VERSION)
+    def _process_opstatus_request(self, timestamp: float, node_id, data: List[int]) -> None:
+        self._node_status[node_id].op_status = op_status_str(data[0])
+        logger.info("Node %s (0x%02X) operation status: %s", self._node_status[node_id]._name, node_id, self._node_status[node_id].op_status)
+        for listener in self._node_status_listeners:
+            listener.on_node_change(timestamp, NodeRef(self._node_status[node_id]._name, node_id), self._node_status[node_id], NodeStatusProperty.OP_STATUS)
 
-    def _process_user_request(self, timestamp: float, request: int, data: List[int]) -> None:
+    def _process_powerstatus_request(self, timestamp: float, node_id, data: List[int]) -> None:
+        self._node_status[node_id].power_status = PowerStatus(data[0] / 10.0, data[1], data[2])
+        logger.info("Node %s (0x%02X) power status: Voltage=%.1fV, OpCurrent=%.1fmA, SleepCurrent=%.1fmA", 
+                    self._node_status[node_id]._name, node_id,
+                    self._node_status[node_id].power_status.voltage,
+                    self._node_status[node_id].power_status.op_current,
+                    self._node_status[node_id].power_status.sleep_current)
+        for listener in self._node_status_listeners: 
+            listener.on_node_change(timestamp, NodeRef(self._node_status[node_id]._name, node_id), self._node_status[node_id], NodeStatusProperty.POWER_STATUS)
+
+    def _process_serialnumber_request(self, timestamp: float, node_id, data: List[int]) -> None:
+        self._node_status[node_id].serial_number = int.from_bytes(data[0:4], 'little')
+        logger.info("Node %s (0x%02X) serial number: 0x%08X", self._node_status[node_id]._name, node_id, self._node_status[node_id].serial_number)
+        for listener in self._node_status_listeners:
+            listener.on_node_change(timestamp, NodeRef(self._node_status[node_id]._name, node_id), self._node_status[node_id], NodeStatusProperty.SERIAL_NUMBER)
+
+    def _process_swnumber_request(self, timestamp: float, node_id, data: List[int]) -> None:
+        self._node_status[node_id].software_version = f"{data[0]}.{data[1]}.{data[2]}"
+        logger.info("Node %s (0x%02X) software version: %s", self._node_status[node_id]._name, node_id, self._node_status[node_id].software_version)
+        for listener in self._node_status_listeners:
+            listener.on_node_change(timestamp, NodeRef(self._node_status[node_id]._name, node_id), self._node_status[node_id], NodeStatusProperty.SOFTWARE_VERSION)
+
+    def _process_unicast_request(self, timestamp: float, request: int, data: List[int]) -> None:
+        request_type = request & LINE_DIAG_UNICAST_REQUEST_ID_MASK
+        node_id = request & LINE_DIAG_UNICAST_ID_MASK
+        
+        if request_type == LINE_DIAG_REQUEST_OP_STATUS:
+            self._process_opstatus_request(timestamp, node_id, data)
+        elif request_type == LINE_DIAG_REQUEST_POWER_STATUS:
+            self._process_powerstatus_request(timestamp, node_id, data)
+        elif request_type == LINE_DIAG_REQUEST_SERIAL_NUMBER:
+            self._process_serialnumber_request(timestamp, node_id, data)
+        elif request_type == LINE_DIAG_REQUEST_SW_NUMBER:
+            self._process_swnumber_request(timestamp, node_id, data)
+
+    def _process_user_request(self, timestamp: float, request: int, data: List[int]) -> SignalValueContainer | None:
         if request in self._user_requests:
             signals = self._user_requests[request].request.decode(data)
             self._user_requests[request].signals = signals
             self._user_requests[request].last_timestamp = timestamp
+            return signals
+
+        return None
 
     def _process_user_request_error(self, timestamp: float, request: int, exception: Exception) -> None:
         if request in self._user_requests:
@@ -303,71 +346,61 @@ class LineMaster():
         event.event.set()
 
     def _do_receive(self, event: TransmitEvent) -> None:
+        timestamp = time.time()
         vbus_response = self.virtual_bus.on_request(event.frame.request)
+        response = None
+        exception = None
 
         if vbus_response is not None:
-            timestamp = time.time()
             # If the virtual bus has a response then send that over the transport
             if self.transport is not None:
                 self.transport.send_data(event.frame.request, vbus_response)
-            
-            # Process the response
-            self._process_diagnostic_request(event.frame.request, vbus_response)
-            self._process_user_request(timestamp, event.frame.request, vbus_response)
-            
-            # Notify every virtual bus member that the request is complete
-            self.virtual_bus.on_request_complete(event.frame.request, vbus_response)
 
-            # Notify the listeners that the request was made
-            if event.frame.request in self._user_requests:
-                for listener in self.request_listeners:
-                    listener.on_user_request(timestamp, self._user_requests[event.frame.request].request,
-                                             self._user_requests[event.frame.request].signals)
-
-            event.timestamp = timestamp
-            event.response = vbus_response
-            # event.signals = ??
-            # event.exception = None
-            event.event.set()
+            response = vbus_response
         else:
-            timestamp = time.time()
             try:
                 if self.transport is not None:
                     # Send the request on the transport layer
                     response = self.transport.request_data(event.frame.request)
-
-                    # Process the response
-                    self._process_diagnostic_request(event.frame.request, response)
-                    self._process_user_request(timestamp, event.frame.request, response)
-
-                    # Notify every virtual bus member that the request is complete
-                    self.virtual_bus.on_request_complete(event.frame.request, response)
-
-                    # Notify the listeners that the request was made
-                    if event.frame.request in self._user_requests:
-                        for listener in self.request_listeners:
-                            listener.on_user_request(timestamp, self._user_requests[event.frame.request].request,
-                                                     self._user_requests[event.frame.request].signals)
-
-                    event.response = response
                 else:
                     raise LineTransportTimeout("No bus response.")
 
-            except Exception as e:
-                event.exception = e
+            except LineTransportError as e:
+                exception = e
 
-                # Notify the virtual bus of the error
-                self.virtual_bus.on_error(event.frame.request, "transport_error")
+        if exception is None:
+            if event.frame.request >= LINE_DIAG_UNICAST_REQUEST_ID_MIN and \
+                event.frame.request <= LINE_DIAG_UNICAST_REQUEST_ID_MAX:
+                self._process_unicast_request(timestamp, event.frame.request, response)
+            elif event.frame.request >= LINE_APP_REQUEST_ID_MIN and \
+                    event.frame.request <= LINE_APP_REQUEST_ID_MAX:
+                signals = self._process_user_request(timestamp, event.frame.request, response)
+                event.signals = signals
+            else:
+                logger.warning("Skipping processing for frame id 0x%04X (out of range)", event.frame.request)
 
-                self._process_user_request_error(timestamp, event.frame.request, e)
+            # Notify every virtual bus member that the request is complete
+            self.virtual_bus.on_request_complete(event.frame.request, response)
 
-                # Notify the listeners of the error
-                if event.frame.request in self._user_requests:
-                    for listener in self.request_listeners:
-                        listener.on_error(timestamp, self._user_requests[event.frame.request].request, "transport_error")
+            # Notify the listeners that the request was made
+            if event.frame.request in self._user_requests:
+                for listener in self._request_listeners:
+                    listener.on_user_request(timestamp, self._user_requests[event.frame.request].request,
+                                            response, self._user_requests[event.frame.request].signals)
+        else:
+            self.virtual_bus.on_error(event.frame.request, exception)
 
-            event.timestamp = time.time()
-            event.event.set()
+            self._process_user_request_error(timestamp, event.frame.request, exception)
+
+            # Notify the listeners of the error
+            if event.frame.request in self._user_requests:
+                for listener in self._request_listeners:
+                    listener.on_error(timestamp, self._user_requests[event.frame.request].request, exception)
+
+        event.response = response
+        event.exception = exception
+        event.timestamp = timestamp
+        event.event.set()
 
     def run(self):
         while self._running:
