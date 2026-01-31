@@ -10,61 +10,104 @@ from line_protocol.protocol.constants import *
 from line_protocol.network import Request, SignalValueContainer
 from line_protocol.protocol.master import PowerStatus
 
+class SimulatedDiagnosticExtension():
+
+    def __init__(self) -> None:
+        self._diagnostic_publishers: Dict[int, callable] = {}
+        self._diagnostic_subscribers: Dict[int, callable] = {}
+
+    def publisher(self, request: int, func) -> None:
+        """
+        Register a publisher function for a diagnostic request.
+        The function should take no arguments and return a list of integers.
+        """
+        self._diagnostic_publishers[request] = func
+
+    def subscriber(self, request: int, func) -> None:
+        """
+        Register a subscriber function for a diagnostic request.
+        The function should take a list of integers as argument.
+        """
+        self._diagnostic_subscribers[request] = func
+
 class SimulatedPeripheral(LineTransportListener):
 
     def __init__(self, node: Node) -> None:
         self.node = node
         self.connected = True
 
-        self.address = node.address
-        self.requests = SimpleNamespace()
+        self.address = node.address     # Optionally assign
         self._op_status = None
         self._power_status = None
         self._software_version = None
         self._serial_number = None
 
+        self.requests = SimpleNamespace()
         for request in node.publishes:
             signals = SimpleNamespace()
             for signal in request.signals:
                 signals.__setattr__(signal.name, signal.initial)
             self.requests.__setattr__(request.name, signals)
 
-    def on_request(self, request: int) -> List[int]:
-        if self.connected is False:
+        self._extensions: List[SimulatedDiagnosticExtension] = []
+
+    def add_extension(self, extension: SimulatedDiagnosticExtension) -> None:
+        self._extensions.append(extension)
+
+    def on_unicast_request(self, request: int) -> List[int]:
+        if request & LINE_DIAG_UNICAST_ID_MASK != self.address:
             return None
+        
+        unicast_id = request & LINE_DIAG_UNICAST_REQUEST_ID_MASK
 
-        # Application
-        for x in self.node.publishes:
-            if x.id == request:
-                return x.encode(vars(self.requests.__getattribute__(x.name)))
-
-        # Diagnostics
-        if self.address is None or self.address == LINE_DIAG_UNICAST_UNASSIGNED_ID:
-            return None
-
-        if request == LINE_DIAG_REQUEST_OP_STATUS | self.address:
+        if unicast_id == LINE_DIAG_REQUEST_OP_STATUS:
             if self._op_status is not None:
                 return [self._op_status]
             else:
                 return None
-        elif request == LINE_DIAG_REQUEST_SERIAL_NUMBER | self.address:
+        elif unicast_id == LINE_DIAG_REQUEST_SERIAL_NUMBER:
             if self._serial_number is not None:
                 return list(int.to_bytes(self._serial_number, 4, 'little'))
             else:
                 return None
-        elif request == LINE_DIAG_REQUEST_SW_NUMBER | self.address:
+        elif unicast_id == LINE_DIAG_REQUEST_SW_NUMBER:
             if self._software_version is not None:
                 return [self._software_version[0], self._software_version[1], self._software_version[2], 0]
             else:
                 return None
-        elif request == LINE_DIAG_REQUEST_POWER_STATUS | self.address:
+        elif unicast_id == LINE_DIAG_REQUEST_POWER_STATUS:
             if self._power_status is not None:
                 return [self._power_status.voltage,
                         self._power_status.op_current & 0xFF, self._power_status.op_current >> 8,
                         self._power_status.sleep_current]
             else:
                 return None
-        
+        else:
+            for ext in self._extensions:
+                if unicast_id in ext._diagnostic_publishers:
+                    return ext._diagnostic_publishers[unicast_id]()
+
+        return None
+    
+    def on_app_request(self, request: int) -> List[int]:
+        for x in self.node.publishes:
+            if x.id == request:
+                return x.encode(vars(self.requests.__getattribute__(x.name)))
+        return None
+
+    def on_request(self, request: int) -> List[int]:
+        if self.connected is False:
+            return None
+
+        if request >= LINE_DIAG_BROADCAST_ID_MIN and request <= LINE_DIAG_BROADCAST_ID_MAX:
+            # handle broadcast requests
+            pass
+        elif request >= LINE_DIAG_UNICAST_REQUEST_ID_MIN and request <= LINE_DIAG_UNICAST_REQUEST_ID_MAX:
+            if self.address is not None and self.address != LINE_DIAG_UNICAST_UNASSIGNED_ID:
+                return self.on_unicast_request(request)
+            return None
+        elif request >= LINE_APP_REQUEST_ID_MIN and request <= LINE_APP_REQUEST_ID_MAX:
+            return self.on_app_request(request)
         return None
 
     def on_request_complete(self, request: int, data: List[int]):
