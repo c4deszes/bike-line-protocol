@@ -114,23 +114,29 @@ class SimulatedPeripheral(LineTransportListener):
         if self.connected is False:
             return
 
-        if request == LINE_DIAG_REQUEST_WAKEUP:
-            self.on_wakeup()
-        elif request == LINE_DIAG_REQUEST_IDLE:
-            self.on_idle()
-        elif request == LINE_DIAG_REQUEST_SHUTDOWN:
-            self.on_shutdown()
-        elif request == LINE_DIAG_REQUEST_COND_CHANGE_ADDRESS:
-            target = int.from_bytes(data[0:4], 'little')
-            if self._serial_number == target:
-                old = self.address
-                self.address = target[4]
-                self.on_conditional_change_address(old, self.address)
-            elif self.address == target[4]:
-                old = self.address
-                self.address = LINE_DIAG_UNICAST_UNASSIGNED_ID
-                self.on_conditional_change_address(old, self.address)
-        else:
+        if request >= LINE_DIAG_BROADCAST_ID_MIN and request <= LINE_DIAG_BROADCAST_ID_MAX:
+            if request == LINE_DIAG_REQUEST_WAKEUP:
+                self.on_wakeup()
+            elif request == LINE_DIAG_REQUEST_IDLE:
+                self.on_idle()
+            elif request == LINE_DIAG_REQUEST_SHUTDOWN:
+                self.on_shutdown()
+            elif request == LINE_DIAG_REQUEST_COND_CHANGE_ADDRESS:
+                target = int.from_bytes(data[0:4], 'little')
+                if self._serial_number == target:
+                    old = self.address
+                    self.address = target[4]
+                    self.on_conditional_change_address(old, self.address)
+                elif self.address == target[4]:
+                    old = self.address
+                    self.address = LINE_DIAG_UNICAST_UNASSIGNED_ID
+                    self.on_conditional_change_address(old, self.address)
+        elif request >= LINE_DIAG_UNICAST_REQUEST_ID_MIN and request <= LINE_DIAG_UNICAST_REQUEST_ID_MAX:
+            unicast_id = request & LINE_DIAG_UNICAST_REQUEST_ID_MASK
+            for ext in self._extensions:
+                if unicast_id in ext._diagnostic_subscribers:
+                    ext._diagnostic_subscribers[unicast_id](data)
+        elif request >= LINE_APP_REQUEST_ID_MIN and request <= LINE_APP_REQUEST_ID_MAX:
             for s in self.node.subscribes:
                 if s.id == request:
                     signals = s.decode(data)
