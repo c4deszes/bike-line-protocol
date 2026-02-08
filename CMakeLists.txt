@@ -86,7 +86,7 @@ function(line_codegen)
 
 cmake_parse_arguments(
     ""
-    "ADAPTER,NO_TRANSPORT"
+    "ADAPTER;NO_TRANSPORT"
     "TARGET;CONFIG"
     ""
     ${ARGN}
