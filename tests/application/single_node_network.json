@@ -1,0 +1,77 @@
+{
+    "name": "TestNetwork",
+    "baudrate": 19200,
+    "master": "Main",
+    "nodes": {
+        "Main": {
+            "subscribes": [],
+            "publishes": []
+        },
+        "Peripheral": {
+            "address": "0x1",
+            "subscribes": [],
+            "publishes": [
+                "U8",
+                "U32",
+                "U8U16",
+                "U8U16U8"
+            ]
+        }
+    },
+    "requests": {
+        "U8": {
+            "id": "0x0001",
+            "size": "1",
+            "layout": {
+                "Value": {
+                    "offset": 0,
+                    "width": 8
+                }
+            }
+        },
+        "U32": {
+            "id": "0x1000",
+            "size": "4",
+            "layout": {
+                "Value": {
+                    "offset": 0,
+                    "width": 32
+                }
+            }
+        },
+        "U8U16": {
+            "id": "0x1001",
+            "size": "3",
+            "layout": {
+                "First": {
+                    "offset": 0,
+                    "width": 8
+                },
+                "Second": {
+                    "offset": 8,
+                    "width": 16
+                }
+            }
+        },
+        "U8U16U8": {
+            "id": "0x1002",
+            "size": "4",
+            "layout": {
+                "First": {
+                    "offset": 0,
+                    "width": 8
+                },
+                "Second": {
+                    "offset": 8,
+                    "width": 16
+                },
+                "Third": {
+                    "offset": 24,
+                    "width": 8
+                }
+            }
+        }
+    },
+    "encoders": {},
+    "schedules": {}
+}

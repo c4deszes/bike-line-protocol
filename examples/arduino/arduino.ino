@@ -14,33 +14,33 @@ LINE_Diag_PowerStatus_t power_status = {
   .I_sleep = LINE_DIAG_POWER_STATUS_SLEEP_CURRENT(100)    // 100uA
 };
 
-uint8_t LINE_Diag_Network_Arduino_GetOperationStatus(void) {
+uint8_t ld_Network_Arduino_GetOperationStatus(void) {
   return LINE_DIAG_OP_STATUS_OK;
 }
-LINE_Diag_PowerStatus_t* LINE_Diag_Network_Arduino_GetPowerStatus(void) {
+LINE_Diag_PowerStatus_t* ld_Network_Arduino_GetPowerStatus(void) {
   return &power_status;
 }
-uint32_t LINE_Diag_Network_Arduino_GetSerialNumber(void) {
+uint32_t ld_Network_Arduino_GetSerialNumber(void) {
   return 0xDEADBEEF;
 }
-LINE_Diag_SoftwareVersion_t* LINE_Diag_Network_Arduino_GetSoftwareVersion(void) {
+LINE_Diag_SoftwareVersion_t* ld_Network_Arduino_GetSoftwareVersion(void) {
   return &sw_version;
 }
 
-void LINE_Diag_Network_Arduino_OnWakeup(void) {
+void ld_Network_Arduino_OnWakeup(void) {
   Serial.println("Wakeup.");
 }
-void LINE_Diag_Network_Arduino_OnIdle(void) {
+void ld_Network_Arduino_OnIdle(void) {
   Serial.println("Go to idle.");
 }
-void LINE_Diag_Network_Arduino_OnShutdown(void) {
+void ld_Network_Arduino_OnShutdown(void) {
   Serial.println("Shutting down.");
 }
-void LINE_Diag_Network_Arduino_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address) {
+void ld_Network_Arduino_OnConditionalChangeAddress(uint8_t old_address, uint8_t new_address) {
 
 }
 
-void LINE_Transport_OnError(bool response, uint16_t request, line_transport_error error_type) {
+void LINE_Transport_OnError(uint8_t channel, bool response, uint16_t request, line_transport_error error_type) {
   if (error_type == line_transport_error_timeout) {
     Serial.println("Timeout.");
   }
@@ -85,22 +85,22 @@ void loop() {
     Serial.print("Received: ");
     Serial.print(data, HEX);
     Serial.println();
-    LINE_Transport_Receive(0, data);
+    LINE_Transport_Receive(LT_Network_CHANNEL, data);
   }
   uint32_t currentTime = millis();
   uint32_t diff = currentTime - transport_timer;
   if (diff >= 1) {
-    LINE_Transport_Update(0, diff);
+    LINE_Transport_Update(LT_Network_CHANNEL, diff);
     transport_timer = currentTime;
   }
 
-  if (LINE_Request_DigitalWrite_data.fields.Bit0 == 1) {
+  if (l_rd_DigitalWrite_Bit0() == 1) {
     digitalWrite(8, HIGH);
   }
   else {
     digitalWrite(8, LOW);
   }
 
-  LINE_Request_AnalogRead_data.fields.Value = analogRead(A0);
+  l_wr_AnalogRead_Value(analogRead(A0));
 
 }

@@ -90,7 +90,7 @@ def main():
                              one_wire=True) as transport:
         with LineMaster(transport, network) as master:
 
-            master.wakeup()
+            master.wakeup(wait=True)
 
             time.sleep(0.5)
 

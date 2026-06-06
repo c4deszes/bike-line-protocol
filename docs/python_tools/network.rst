@@ -109,7 +109,7 @@ requests.
 .. code-block:: json
 
     "ConfigSchedule": {
-        "delay": "50 ms",
+        "delay": 0.1,
         "entries": [
             {"type": "request", "request": "SpeedStatus"},
             {"type": "wakeup"}
@@ -119,5 +119,33 @@ requests.
             {"type": "pwrstatus", "node": "RotorSensor"}
             {"type": "serial", "node": "RotorSensor"}
             {"type": "swversion", "node": "RotorSensor"}
+        ]
+    }
+
+Two types of schedules are supported:
+
+* Fixed: entries are executed in order, this is the default or when 'type' is set to 'fixed'.
+* Priority aging: entries are executed based on their priority, when 'type' is set to 'priority-aging'.
+
+Two types of slotting are supported:
+
+* Variable: each entry is executed after the previous one plus the delay, this is the default or when 'slots' is set to 'variable'.
+* Fixed: each entry is executed at fixed time intervals, when 'slots' is set to 'fixed'.
+
+.. note:: Fixed slots are not supported at the moment.
+
+Below is an example of a priority-aging schedule with variable slots. The priority and age parameters
+are crucial for the schedule to work correctly. The age is used to prevent starvation, however even
+that doesn't guarantee that low priority requests will always be sent.
+
+.. code-block:: json
+
+    "NormalSchedule": {
+        "type": "priority-aging",
+        "slots": "variable",
+        "delay": 0.05,
+        "entries": [
+            {"type": "request", "request": "SpeedStatus", "priority": 2, "maxAge": 5},
+            {"type": "request", "request": "LightSync", "priority": 4, "maxAge": 10},
         ]
     }

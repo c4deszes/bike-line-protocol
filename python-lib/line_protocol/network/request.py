@@ -150,6 +150,9 @@ class Request():
         _packed = Request.packer(self.signals, self.size)
 
         class RequestData(ctypes.LittleEndianStructure):
+            _pack_ = 1
+            _align_ = 1
+            _layout_ = 'ms'
             nonlocal _packed
             _fields_ = _packed
 
@@ -217,8 +220,7 @@ class Request():
         return list(bytes(data))
 
     def decode_raw(self, data) -> Dict[str, int]:
-        # TODO: in some requests the length required is longer than the actual length
-        decoded = self.data_class.from_buffer_copy(bytes(data + [0]))
+        decoded = self.data_class.from_buffer_copy(bytes(data))
         return decoded.fields
 
     def decode(self, data: Iterable[int]) -> SignalValueContainer:

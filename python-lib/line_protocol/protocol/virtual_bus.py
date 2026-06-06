@@ -1,13 +1,10 @@
+# System imports
 import logging
-from typing import List, Union, TYPE_CHECKING, Dict
-from types import SimpleNamespace
-from dataclasses import dataclass
+from typing import List
 
-from line_protocol.protocol.transport import LineTransportListener
-from line_protocol.protocol.util import op_status_code, op_status_str, sw_version_str
-from line_protocol.network.nodes import Node
+# Local imports
+from line_protocol.protocol.transport import LineTransportListener, LineTransportError
 from line_protocol.protocol.constants import *
-from line_protocol.network import Request
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +69,7 @@ class VirtualBus(LineTransportListener):
         for member in self.members:
             member.on_request_complete(request, data)
 
-    def on_error(self, request: int, error_type: str):
+    def on_error(self, request: int, error: LineTransportError):
         """
         Handles an error that occurred during the processing of a request.
         This method is called when an error occurs while processing a request. It notifies all
@@ -80,9 +77,8 @@ class VirtualBus(LineTransportListener):
 
         :param request: Request code that caused the error
         :type request: int
-        :param error_type: Type of error that occurred, e.g., 'bus contention', 'timeout', etc.
-        :type error_type: str
+        :param error: Error that occurred, e.g.: LineTransportTimeout
+        :type error: LineTransportError
         """
         for member in self.members:
-            member.on_error(request, error_type)
-
+            member.on_error(request, error)

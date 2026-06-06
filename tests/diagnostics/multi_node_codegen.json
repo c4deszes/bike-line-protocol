@@ -1,0 +1,27 @@
+{
+    "Network": {
+        "channel": 0,
+        "rxBufferSize": 128,
+        "txBufferSize": 128,
+        "oneWire": true,
+        "network": "multi_node_network.json",
+        "nodes": {
+            "Peripheral1": {
+                "enabled": true,
+                "diagnostics": {
+                    "channel": 0,
+                    "enabled": true,
+                    "initAddress": true
+                }
+            },
+            "Peripheral2": {
+                "enabled": true,
+                "diagnostics": {
+                    "channel": 1,
+                    "enabled": true,
+                    "initAddress": true
+                }
+            }
+        }
+    }
+}

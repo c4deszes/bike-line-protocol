@@ -4,20 +4,25 @@
 #include "line_api.h"
 
 {% for channel in channels %}
+LINE_TRANSPORT_INST(lt_{{channel.name}},
+                    LT_{{channel.name}}_RXBUFFER_SIZE,
+                    LT_{{channel.name}}_TXBUFFER_SIZE,
+                    LT_{{channel.name}}_WIREMODE);
+{% endfor %}
+
+{% for channel in channels %}
 {% for node in channel.nodes %}
 {% for request in node.node.publishes %}
 #ifndef LINE_REQUEST_{{request.name}}_FRAME_DEFINED
 #define LINE_REQUEST_{{request.name}}_FRAME_DEFINED
-LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
-bool LINE_Request_{{request.name}}_flag_internal;
+L_{{request.name}}_t l_{{request.name}};
 #endif
 {% endfor %}
 
 {% for request in node.node.subscribes %}
 #ifndef LINE_REQUEST_{{request.name}}_FRAME_DEFINED
 #define LINE_REQUEST_{{request.name}}_FRAME_DEFINED
-LINE_Frame_{{request.name}}_t LINE_Request_{{request.name}}_data;
-bool LINE_Request_{{request.name}}_flag_internal;
+L_{{request.name}}_t l_{{request.name}};
 #endif
 {% endfor %}
 {% endfor %}
@@ -26,12 +31,12 @@ bool LINE_Request_{{request.name}}_flag_internal;
 {% for channel in channels %}
 {% for node in channel.nodes %}
     {% if node.diagnostics.enabled %}
-static LINE_Diag_Config_t LINE_DiagConfig_{{channel.name}}_{{node.node.name}} = {
-    .transport_channel = {{channel.channel}},
+static LINE_Diag_Config_t ld_{{channel.name}}_{{node.node.name}} = {
+    .transport_channel = LT_{{channel.name}}_CHANNEL,
 
     {% if node.diagnostics.initAddress is boolean %}
         {% if node.diagnostics.initAddress %}
-    .address = LINE_NODE_{{node.node.name}}_DIAG_ADDRESS,
+    .address = LD_{{node.node.name}}_ADDRESS,
         {% else %}
     .address = LINE_DIAG_UNICAST_UNASSIGNED_ID,
         {% endif %}
@@ -39,15 +44,15 @@ static LINE_Diag_Config_t LINE_DiagConfig_{{channel.name}}_{{node.node.name}} = 
     .address = {{ node.diagnostics.initAddress }},
     {% endif %}
 
-    .on_wakeup = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnWakeup,
-    .on_idle = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnIdle,
-    .on_shutdown = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnShutdown,
-    .on_conditional_change_address = LINE_Diag_{{channel.name}}_{{node.node.name}}_OnConditionalChangeAddress,
+    .on_wakeup = ld_{{channel.name}}_{{node.node.name}}_OnWakeup,
+    .on_idle = ld_{{channel.name}}_{{node.node.name}}_OnIdle,
+    .on_shutdown = ld_{{channel.name}}_{{node.node.name}}_OnShutdown,
+    .on_conditional_change_address = ld_{{channel.name}}_{{node.node.name}}_OnConditionalChangeAddress,
 
-    .op_status = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetOperationStatus,
-    .power_status = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetPowerStatus,
-    .serial_number = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSerialNumber,
-    .software_version = LINE_Diag_{{channel.name}}_{{node.node.name}}_GetSoftwareVersion,
+    .op_status = ld_{{channel.name}}_{{node.node.name}}_GetOperationStatus,
+    .power_status = ld_{{channel.name}}_{{node.node.name}}_GetPowerStatus,
+    .serial_number = ld_{{channel.name}}_{{node.node.name}}_GetSerialNumber,
+    .software_version = ld_{{channel.name}}_{{node.node.name}}_GetSoftwareVersion,
 };
     {% endif %}
 {% endfor %}
@@ -55,11 +60,25 @@ static LINE_Diag_Config_t LINE_DiagConfig_{{channel.name}}_{{node.node.name}} = 
 
 void LINE_App_Init(void) {
     {% for channel in channels %}
-    LINE_Transport_Init({{channel.channel}}, {{'true' if channel.one_wire else 'false'}});
+    LINE_Transport_Init(LT_{{channel.name}}_CHANNEL, &lt_{{channel.name}});
     {% for node in channel.nodes %}
     {% if node.diagnostics.enabled %}
-    LINE_Diag_Init({{node.diagnostics.diag_channel}}, &LINE_DiagConfig_{{channel.name}}_{{node.node.name}});
+    LINE_Diag_Init(LD_{{node.node.name}}_CHANNEL, &ld_{{channel.name}}_{{node.node.name}});
     {% endif %}
+    {% endfor %}
+    {% endfor %}
+
+    // TODO: implement signal initialization
+
+    {% for channel in channels %}
+    {% for node in channel.nodes %}
+    {% for request in node.node.publishes %}
+    l_{{request.name}}.enabled = true;
+    l_{{request.name}}.flag = false;
+    {% endfor %}
+    {% for request in node.node.subscribes %}
+    l_{{request.name}}.flag = false;
+    {% endfor %}
     {% endfor %}
     {% endfor %}
 }
@@ -70,12 +89,12 @@ void LINE_App_OnRequest(uint8_t channel, uint16_t request, uint8_t size, uint8_t
     {% for request in node.node.subscribes %}
     #ifndef LINE_REQUEST_{{request.name}}_ONREQUEST_HANDLED
     #define LINE_REQUEST_{{request.name}}_ONREQUEST_HANDLED
-    if (channel == LINE_CHANNEL_{{channel.name}} && request == LINE_REQUEST_{{request.name}}_ID) {
+    if (channel == LT_{{channel.name}}_CHANNEL && request == L_{{request.name}}_ID) {
         // TODO: reject request if size doesn't equal the request size
-        for (int i = 0; i < LINE_REQUEST_{{request.name}}_SIZE; i++) {
-            LINE_Request_{{request.name}}_data.data[i] = payload[i];
+        for (int i = 0; i < L_{{request.name}}_SIZE; i++) {
+            l_{{request.name}}.data.bytes[i] = payload[i];
         }
-        LINE_Request_{{request.name}}_flag_internal = true;
+        l_{{request.name}}.flag = true;
         return;
     }
     #endif
@@ -90,7 +109,7 @@ bool LINE_App_RespondsTo(uint8_t channel, uint16_t request) {
     {% for channel in channels %}
     {% for node in channel.nodes %}
     {%- for request in node.node.publishes %}
-    if (channel == LINE_CHANNEL_{{channel.name}} && request == LINE_REQUEST_{{request.name}}_ID) {
+    if (channel == LT_{{channel.name}}_CHANNEL && request == L_{{request.name}}_ID && l_{{request.name}}.enabled) {
         return true;
     }
     {% endfor %}
@@ -105,12 +124,12 @@ bool LINE_App_PrepareResponse(uint8_t channel, uint16_t request, uint8_t* size, 
     {%- for request in node.node.publishes %}
     #ifndef LINE_REQUEST_{{request.name}}_PREPARERESPONSE_HANDLED
     #define LINE_REQUEST_{{request.name}}_PREPARERESPONSE_HANDLED
-    if (channel == LINE_CHANNEL_{{channel.name}} && request == LINE_REQUEST_{{request.name}}_ID) {
-        *size = LINE_REQUEST_{{request.name}}_SIZE;
-        for (int i = 0; i < LINE_REQUEST_{{request.name}}_SIZE; i++) {
-            payload[i] = LINE_Request_{{request.name}}_data.data[i];
+    if (channel == LT_{{channel.name}}_CHANNEL && request == L_{{request.name}}_ID && l_{{request.name}}.enabled) {
+        *size = L_{{request.name}}_SIZE;
+        for (int i = 0; i < L_{{request.name}}_SIZE; i++) {
+            payload[i] = l_{{request.name}}.data.bytes[i];
         }
-        LINE_Request_{{request.name}}_flag_internal = true;
+        l_{{request.name}}.flag = true;
         return true;
     }
     #endif
@@ -120,37 +139,3 @@ bool LINE_App_PrepareResponse(uint8_t channel, uint16_t request, uint8_t* size, 
     
     return LINE_Diag_PrepareResponse(channel, request, size, payload);
 }
-
-{% for channel in channels %}
-{% for node in channel.nodes %}
-{% for request in node.node.publishes %}
-#ifndef LINE_REQUEST_{{request.name}}_FLAG_DEFINED
-#define LINE_REQUEST_{{request.name}}_FLAG_DEFINED
-bool LINE_Request_{{request.name}}_flag(void) {
-    if (LINE_Request_{{request.name}}_flag_internal) {
-        LINE_Request_{{request.name}}_flag_internal = false;
-        return true;
-    }
-    return false;
-}
-#endif
-{% endfor %}
-{% endfor %}
-{% endfor %}
-
-{% for channel in channels %}
-{% for node in channel.nodes %}
-{% for request in node.node.subscribes %}
-#ifndef LINE_REQUEST_{{request.name}}_FLAG_DEFINED
-#define LINE_REQUEST_{{request.name}}_FLAG_DEFINED
-bool LINE_Request_{{request.name}}_flag(void) {
-    if (LINE_Request_{{request.name}}_flag_internal) {
-        LINE_Request_{{request.name}}_flag_internal = false;
-        return true;
-    }
-    return false;
-}
-#endif
-{% endfor %}
-{% endfor %}
-{% endfor %}

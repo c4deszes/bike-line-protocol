@@ -11,18 +11,89 @@ endfunction()
 add_custom_target(coverage_report
     COMMAND ${CMAKE_COMMAND} -E echo "Generating coverage report..."
     COMMAND ${CMAKE_COMMAND} -E make_directory coverage
-    COMMAND gcovr -r ${CMAKE_SOURCE_DIR} --html --html-details -o coverage/coverage.html
+    COMMAND gcovr -r ${CMAKE_SOURCE_DIR} --cobertura coverage/coverage.xml
+                                         --html coverage/coverage.html
+                                         --html-details coverage/coverage_details.html
 )
 
 ################################################################################
 # Test targets
 ################################################################################
-add_executable(test_TransportReceive EXCLUDE_FROM_ALL)
-target_sources(test_TransportReceive PRIVATE
+
+add_executable(test_TransportReceive_Single EXCLUDE_FROM_ALL)
+target_sources(test_TransportReceive_Single PRIVATE
     ../src/transport.c
-    test_TransportReceive.cpp
+    transport/test_TransportReceive_Single.cpp
 )
-add_test(test_TransportReceive)
+add_test(test_TransportReceive_Single)
+
+add_executable(test_TransportReceive_Multiple EXCLUDE_FROM_ALL)
+target_include_directories(test_TransportReceive_Multiple PRIVATE transport/multiple)
+target_sources(test_TransportReceive_Multiple PRIVATE
+    ../src/transport.c
+    transport/multiple/test_TransportReceive_Multiple.cpp
+)
+add_test(test_TransportReceive_Multiple)
+
+add_executable(test_TransportReceive_BufSize EXCLUDE_FROM_ALL)
+target_include_directories(test_TransportReceive_BufSize PRIVATE transport/bufsize)
+target_sources(test_TransportReceive_BufSize PRIVATE
+    ../src/transport.c
+    transport/bufsize/test_TransportReceive_BufSize.cpp
+)
+add_test(test_TransportReceive_BufSize)
+
+################################################################################
+
+line_codegen(
+    TARGET DiagnosticsSingleNode
+    CONFIG diagnostics/single_node_codegen.json
+    ADAPTER
+)
+add_executable(test_Diagnostics_SingleNode EXCLUDE_FROM_ALL)
+target_sources(test_Diagnostics_SingleNode PRIVATE
+    diagnostics/test_Diagnostics_SingleNode.cpp
+)
+target_link_libraries(test_Diagnostics_SingleNode PRIVATE DiagnosticsSingleNode)
+add_test(test_Diagnostics_SingleNode)
+
+line_codegen(
+    TARGET DiagnosticsMultiNode
+    CONFIG diagnostics/multi_node_codegen.json
+    ADAPTER
+)
+add_executable(test_Diagnostics_MultiNode EXCLUDE_FROM_ALL)
+target_sources(test_Diagnostics_MultiNode PRIVATE
+    diagnostics/test_Diagnostics_MultiNode.cpp
+)
+target_link_libraries(test_Diagnostics_MultiNode PRIVATE DiagnosticsMultiNode)
+add_test(test_Diagnostics_MultiNode)
+
+################################################################################
+
+line_codegen(
+    TARGET ApplicationBytePackingSingleNode
+    CONFIG application/single_node_codegen.json
+    ADAPTER
+)
+add_executable(test_Application_BytePacking EXCLUDE_FROM_ALL)
+target_sources(test_Application_BytePacking PRIVATE
+    application/test_Application_BytePacking.cpp
+)
+target_link_libraries(test_Application_BytePacking PRIVATE ApplicationBytePackingSingleNode)
+add_test(test_Application_BytePacking)
+
+line_codegen(
+    TARGET ApplicationFlowTest
+    CONFIG application/flow_test_codegen.json
+    ADAPTER
+)
+add_executable(test_Application_Flow EXCLUDE_FROM_ALL)
+target_sources(test_Application_Flow PRIVATE
+    application/test_Application_Flow.cpp
+)
+target_link_libraries(test_Application_Flow PRIVATE ApplicationFlowTest)
+add_test(test_Application_Flow)
 
 # add_executable(test_ApplicationInterface EXCLUDE_FROM_ALL)
 # target_sources(test_ApplicationInterface PRIVATE
@@ -31,12 +102,6 @@ add_test(test_TransportReceive)
 # )
 # add_test(test_ApplicationInterface)
 
-# line_codegen(
-#     TARGET test_network
-#     NETWORK test_network.json
-#     NODE Peripheral_1
-#     ADAPTER
-# )
 # add_executable(test_ApplicationSignals EXCLUDE_FROM_ALL)
 # target_sources(test_ApplicationSignals PRIVATE
 #     test_ApplicationSignals.cpp

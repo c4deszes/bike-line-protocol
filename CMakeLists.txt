@@ -25,9 +25,13 @@ target_include_directories(line-protocol-api INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-add_library(line-protocol-sources INTERFACE)
-target_sources(line-protocol-sources INTERFACE
+add_library(line-protocol-transport-source INTERFACE)
+target_sources(line-protocol-transport-source INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/transport.c
+)
+
+add_library(line-protocol-diag-sources INTERFACE)
+target_sources(line-protocol-diag-sources INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.c
 )
 
@@ -82,7 +86,7 @@ function(line_codegen)
 
 cmake_parse_arguments(
     ""
-    "ADAPTER"
+    "ADAPTER;NO_TRANSPORT"
     "TARGET;CONFIG"
     ""
     ${ARGN}
@@ -99,7 +103,12 @@ cmake_parse_arguments(
     add_library(${_TARGET} INTERFACE)
     target_sources(${_TARGET} INTERFACE ${line_codegen_dir}/line_api.c)
     target_include_directories(${_TARGET} INTERFACE ${line_codegen_dir})
-    target_link_libraries(${_TARGET} INTERFACE line-protocol-sources line-protocol-api)
+    target_link_libraries(${_TARGET} INTERFACE line-protocol-diag-sources line-protocol-api)
+
+    if (NOT ${_NO_TRANSPORT})
+        target_link_libraries(${_TARGET} INTERFACE line-protocol-transport-source)
+    endif()
+
     if(${_ADAPTER})
         target_link_libraries(${_TARGET} INTERFACE line-protocol-adapter-sources)
     endif()

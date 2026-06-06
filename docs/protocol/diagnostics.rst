@@ -35,6 +35,10 @@ The request code ``0x0000`` is used to wakeup all peripherals, it's an empty mes
 payload. Peripherals will in general wakeup on the line transitions, but it's important that
 peripherals already awake still sense valid messages coming in.
 
+Peripherals are allowed to send wakeup messages themselves to wakeup the network, for example
+a motion sensor could detect that the bike is in use again. However they shall only send it when
+there has been no activity on the bus for a certain period of time to avoid collisions.
+
 Idle
 ~~~~~
 
@@ -44,7 +48,9 @@ by the body computer when the bicycle is found to be idle. No payload is provide
 The peripheral is expected to continue operation when a wakeup is received, this also means that the
 ride continues therefore attributes stored for a ride should be recalled, e.g.: distance.
 
-The peripheral's current consumption should be reduced.
+The peripheral's current consumption should be reduced, but each peripheral may decide even based on
+user configuration what mode to enter. For example the user may prefer to turn off all lights when idle
+to save battery, or keep them on for visibility.
 
 In this mode the peripherals are allowed to initiate wakeup of the network by sending a break
 ``0x00``, for example a motion sensor could detect that the bike is in use again. This pulse can
@@ -58,10 +64,13 @@ The request code ``0x0101`` is used to shutdown all peripherals. This mode is se
 computer when the ride ends by user request, the ignition switch is set to off or the battery is
 removed. No payload is provided.
 
+The peripheral is expected to enter the lowest power mode possible, retaining only the minimum
+functions required to detect wakeup events on the bus or from other sources like buttons.
+
 Addressing
 ----------
 
-Each peripheral on a network stores it's diagnostic address, the address initially is unassigned
+Each peripheral on a network stores it's diagnostic address, the address initially is unassigned,
 applications can then change it to whatever they have stored.
 
 Conditional change address

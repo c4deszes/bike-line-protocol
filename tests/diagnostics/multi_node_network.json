@@ -1,0 +1,24 @@
+{
+    "name": "TestNetwork",
+    "baudrate": 19200,
+    "master": "Main",
+    "nodes": {
+        "Main": {
+            "subscribes": [],
+            "publishes": []
+        },
+        "Peripheral1": {
+            "address": "0x1",
+            "subscribes": [],
+            "publishes": []
+        },
+        "Peripheral2": {
+            "address": "0x2",
+            "subscribes": [],
+            "publishes": []
+        }
+    },
+    "requests": {},
+    "encoders": {},
+    "schedules": {}
+}

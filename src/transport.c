@@ -6,10 +6,6 @@
 #error "LINE Protocol transport layer requires at least one channel"
 #endif
 
-#if LINE_TRANSPORT_RX_BUFFER_SIZE < LINE_TRANSPORT_DATA_MAX
-#warning "LINE Protocol transport layer has limited receive buffer size"
-#endif
-
 /* Transport layer constants */
 
 #define LINE_REQUEST_TIMEOUT 5
@@ -37,19 +33,32 @@ typedef struct {
     uint8_t currentSize;
     uint8_t currentSizeCounter;
     uint8_t calculatedChecksum;
-    uint8_t rxBuffer[LINE_TRANSPORT_RX_BUFFER_SIZE];
+    uint8_t rxBufferSize;
+    uint8_t* rxBuffer;
     uint8_t outSize;
-    uint8_t txBuffer[LINE_TRANSPORT_TX_BUFFER_SIZE];
+    uint8_t txBufferSize;
+    uint8_t* txBuffer;
 } channel_state;
 
 static channel_state channels[LINE_TRANSPORT_CHANNEL_COUNT];
 
-void LINE_Transport_Init(uint8_t channel, bool one_wire) {
+void LINE_Transport_Init(uint8_t channel, LINE_Transport_Inst_t* inst) {
     if (channel >= LINE_TRANSPORT_CHANNEL_COUNT) return;
     channels[channel].currentState = protocol_state_wait_sync;
     channels[channel].lastReceived = 0;
     channels[channel].timestamp = 0;
-    channels[channel].isOneWire = one_wire;
+    channels[channel].currentRequest = 0;
+    channels[channel].currentResponding = false;
+    channels[channel].currentSize = 0;
+    channels[channel].currentSizeCounter = 0;
+    channels[channel].calculatedChecksum = 0;
+    channels[channel].outSize = 0;
+
+    channels[channel].isOneWire = inst->isOneWire;
+    channels[channel].rxBufferSize = inst->rxBufferSize;
+    channels[channel].rxBuffer = inst->rxBuffer;
+    channels[channel].txBufferSize = inst->txBufferSize;
+    channels[channel].txBuffer = inst->txBuffer;
 }
 
 void LINE_Transport_Update(uint8_t channel, uint8_t elapsed) {
@@ -95,6 +104,7 @@ void LINE_Transport_Receive(uint8_t channel, uint8_t data) {
             ch->currentResponding = LINE_Transport_RespondsTo(channel, ch->currentRequest);
 
             if (ch->currentResponding) {
+                // TODO: this context should somehow now if there's enough space in the tx buffer
                 bool willRespond = LINE_Transport_PrepareResponse(channel, ch->currentRequest, &ch->outSize, ch->txBuffer);
                 if (willRespond) {
                     uint8_t checksum = ch->outSize + LINE_DATA_CHECKSUM_OFFSET;
@@ -137,7 +147,7 @@ void LINE_Transport_Receive(uint8_t channel, uint8_t data) {
         }
     }
     else if(ch->currentState == protocol_state_wait_data) {
-        if (ch->currentSize <= LINE_TRANSPORT_RX_BUFFER_SIZE) {
+        if (ch->currentSize <= ch->rxBufferSize) {
             ch->rxBuffer[ch->currentSizeCounter] = data;
             ch->calculatedChecksum += data;
             ch->currentSizeCounter++;
@@ -150,7 +160,7 @@ void LINE_Transport_Receive(uint8_t channel, uint8_t data) {
     else if(ch->currentState == protocol_state_wait_data_checksum) {
         uint8_t checksum = data;
 
-        if (ch->currentSize > LINE_TRANSPORT_RX_BUFFER_SIZE) {
+        if (ch->currentSize > ch->rxBufferSize) {
             ch->currentState = protocol_state_wait_sync;
             LINE_Transport_OnError(channel, ch->currentResponding, ch->currentRequest, line_transport_error_partial_data);
         }
@@ -180,20 +190,20 @@ void LINE_Transport_Request(uint8_t channel, uint16_t request) {
 }
 
 
-static void _no_handler(uint8_t channel, uint16_t request) {
+static void LINE_Transport_WriteRequest_NoHandler(uint8_t channel, uint16_t request) {
     // Empty function for not implemented callbacks
 }
 
-void LINE_Transport_WriteRequest(uint8_t channel, uint16_t request) __attribute__((weak, alias("_no_handler")));
+void LINE_Transport_WriteRequest(uint8_t channel, uint16_t request) __attribute__((weak, alias("LINE_Transport_WriteRequest_NoHandler")));
 
-static void _no_handler1(uint8_t channel, bool response, uint16_t request, line_transport_error error_type) {
+static void LINE_Transport_OnError_NoHandler(uint8_t channel, bool response, uint16_t request, line_transport_error error_type) {
     // Empty function for not implemented callbacks
 }
 
-void LINE_Transport_OnError(uint8_t channel, bool response, uint16_t request, line_transport_error error_type) __attribute__((weak, alias("_no_handler1")));
+void LINE_Transport_OnError(uint8_t channel, bool response, uint16_t request, line_transport_error error_type) __attribute__((weak, alias("LINE_Transport_OnError_NoHandler")));
 
-static void _no_handler2(uint8_t channel, bool response, uint16_t request, uint8_t size, uint8_t* payload) {
+static void LINE_Transport_OnData_NoHandler(uint8_t channel, bool response, uint16_t request, uint8_t size, uint8_t* payload) {
     // Empty function for not implemented callbacks
 }
 
-void LINE_Transport_OnData(uint8_t channel, bool response, uint16_t request, uint8_t size, uint8_t* payload) __attribute__((weak, alias("_no_handler2")));
+void LINE_Transport_OnData(uint8_t channel, bool response, uint16_t request, uint8_t size, uint8_t* payload) __attribute__((weak, alias("LINE_Transport_OnData_NoHandler")));

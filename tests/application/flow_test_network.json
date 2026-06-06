@@ -1,0 +1,56 @@
+{
+    "name": "TestNetwork",
+    "baudrate": 19200,
+    "master": "Main",
+    "nodes": {
+        "Main": {
+            "subscribes": [
+                "Status"
+            ],
+            "publishes": [
+                "Set"
+            ]
+        },
+        "Peripheral": {
+            "address": "0x1",
+            "subscribes": [
+                "Set"
+            ],
+            "publishes": [
+                "Status"
+            ]
+        }
+    },
+    "requests": {
+        "Set": {
+            "id": "0x1000",
+            "size": "3",
+            "layout": {
+                "First": {
+                    "offset": 0,
+                    "width": 8
+                },
+                "Second": {
+                    "offset": 8,
+                    "width": 16
+                }
+            }
+        },
+        "Status": {
+            "id": "0x1001",
+            "size": "3",
+            "layout": {
+                "First": {
+                    "offset": 0,
+                    "width": 8
+                },
+                "Second": {
+                    "offset": 8,
+                    "width": 16
+                }
+            }
+        }
+    },
+    "encoders": {},
+    "schedules": {}
+}

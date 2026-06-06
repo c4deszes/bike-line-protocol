@@ -20,7 +20,8 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/c4deszes/bike-line-protocol",
     packages=find_packages(),
-    package_data={},
+    package_data={'': ['*.jinja2']},
+    include_package_data=True,
     license='MIT',
     keywords=['LINE'],
     install_requires=[
@@ -47,8 +48,6 @@ setup(
     entry_points={
         'console_scripts': [
             'line-codegen=line_protocol.codegen.generator:main',
-            'line-monitor=line_protocol.monitor.cli:main',
-            'line-plot=line_protocol.plot.ui:main',
             'line-discovery=line_protocol.util.discovery:main'
         ]
     },

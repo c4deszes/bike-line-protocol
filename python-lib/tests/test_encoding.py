@@ -1,3 +1,5 @@
+# pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring
+# pylint: disable=invalid-name
 import pytest
 from line_protocol.network.request import NoneEncoder, FormulaEncoder, MappingEncoder, TwosComplementEncoder
 

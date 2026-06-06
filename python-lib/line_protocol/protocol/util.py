@@ -36,7 +36,7 @@ def data_checksum(data: Iterable[int]) -> int:
     Calculates the checksum for a given data list according to LINE protocol specifications.
 
     :param data: Request data as a list of integers
-    :type data: _type_
+    :type data: Iterable[int]
     :return: Checksum value
     :rtype: int
     """

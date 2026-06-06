@@ -13,6 +13,7 @@ be generated in the output folder.
 
 .. code-block:: bash
 
+    line-codegen <config> [--output <path>]
     python -m line_protocol.codegen <config> [--output <path>]
 
 Options
@@ -57,7 +58,6 @@ implement multiple nodes in the same physical ECU.
                         "initAddress": true             // When set to true the diagnostic address will be set after init
                                                         // when set to false the address won't be assigned
                                                         // when set to a number then that number will be assigned, but results in a warning
-                        
                     }
                 },
                 "RearLight": {

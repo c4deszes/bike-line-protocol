@@ -9,29 +9,42 @@ extern "C"
 #include <stdint.h>
 #include <stdbool.h>
 
+#if defined(__has_include)
+  #if __has_include("line_transport_cfg.h")
+    #include "line_transport_cfg.h"
+  #endif
+#endif
+
 #ifndef LINE_TRANSPORT_CHANNEL_COUNT
 #define LINE_TRANSPORT_CHANNEL_COUNT 1
 #endif
 
-#ifndef LINE_TRANSPORT_RX_BUFFER_SIZE
-#define LINE_TRANSPORT_RX_BUFFER_SIZE 255
-#endif
+#define ONEWIRE true
+#define TWOWIRE false
 
-#ifndef LINE_TRANSPORT_TX_BUFFER_SIZE
-#define LINE_TRANSPORT_TX_BUFFER_SIZE 255
-#endif
+typedef struct {
+  bool isOneWire;
+  uint8_t rxBufferSize;
+  uint8_t* rxBuffer;
+  uint8_t txBufferSize;
+  uint8_t* txBuffer;
+} LINE_Transport_Inst_t;
 
-typedef enum {
-    line_transport_error_timeout,
-    line_transport_error_header_invalid,
-    line_transport_error_data_invalid,
-    line_transport_error_partial_data
-} line_transport_error;
+#define LINE_TRANSPORT_INST(name, rx_size, tx_size, one_wire) \
+    uint8_t name##_rx_buffer[rx_size]; \
+    uint8_t name##_tx_buffer[tx_size]; \
+    static LINE_Transport_Inst_t name = { \
+        .isOneWire = (one_wire), \
+        .rxBufferSize = rx_size, \
+        .rxBuffer = name##_rx_buffer, \
+        .txBufferSize = tx_size, \
+        .txBuffer = name##_tx_buffer \
+    };
 
 /**
  * @brief Initializes the transport layer
  */
-void LINE_Transport_Init(uint8_t channel, bool one_wire);
+void LINE_Transport_Init(uint8_t channel, LINE_Transport_Inst_t* inst);
 
 /**
  * @brief Updates the transport layer state, called by the physical layer or the scheduler
@@ -108,6 +121,13 @@ void LINE_Transport_WriteRequest(uint8_t channel, uint16_t request);
  * @param payload Data pointer
  */
 void LINE_Transport_OnData(uint8_t channel, bool response, uint16_t request, uint8_t size, uint8_t* payload);
+
+typedef enum {
+    line_transport_error_timeout,
+    line_transport_error_header_invalid,
+    line_transport_error_data_invalid,
+    line_transport_error_partial_data
+} line_transport_error;
 
 /**
  * @brief Called when an error occurs, which can be

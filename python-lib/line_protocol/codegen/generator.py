@@ -1,20 +1,16 @@
+# System imports
 import os
 import sys
 import argparse
+import json
 from typing import Union
 from dataclasses import dataclass
+
+# Third-party imports
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-from ..network import Network, load_network, Node
-import json
-
-@dataclass
-class Channel:
-    name: str
-    channel: int
-    one_wire: bool
-    network: Network
-    nodes: list[Node]
+# Local imports
+from line_protocol.network import Network, load_network, Node
 
 @dataclass
 class DiagnosticSettings:
@@ -28,7 +24,17 @@ class NodeSettings:
     enabled: bool
     diagnostics: DiagnosticSettings
 
-def codegen(channels: list[Node], output_path: str):
+@dataclass
+class Channel:
+    name: str
+    channel: int
+    rx_buffer_size: int
+    tx_buffer_size: int
+    one_wire: bool
+    network: Network
+    nodes: list[NodeSettings]
+
+def codegen(channels: list[Channel], output_path: str):
     env = Environment(
         loader=PackageLoader('line_protocol', 'codegen'),
         autoescape=select_autoescape()
@@ -60,19 +66,32 @@ def main():
             nodes = []
 
             for node_name, node_props in props['nodes'].items():
+                network_node = network.get_node(node_name)
+
+                if "diagnostics" not in node_props:
+                    diag_settings = DiagnosticSettings(
+                        diag_channel=0,
+                        enabled=False,
+                        initAddress=False
+                    )
+                else:
+                    diag_settings = DiagnosticSettings(
+                        diag_channel=int(node_props["diagnostics"].get('channel', 0)),
+                        enabled=node_props["diagnostics"].get('enabled', False),
+                        initAddress=node_props["diagnostics"].get('initAddress', True)
+                    )
+
                 nodes.append(NodeSettings(
-                    node=network.get_node(node_name),
-                    diagnostics=DiagnosticSettings(
-                        diag_channel=int(node_props["diagnostics"]['channel']),
-                        enabled=bool(node_props["diagnostics"]['enabled']),
-                        initAddress=node_props["diagnostics"]['initAddress']
-                    ),
+                    node=network_node,
+                    diagnostics=diag_settings,
                     enabled=bool(node_props['enabled'])
                 ))
 
             channel = Channel(
                 name=name,
                 channel=int(props['channel']),
+                rx_buffer_size=int(props.get('rxBufferSize', 255)),
+                tx_buffer_size=int(props.get('txBufferSize', 255)),
                 one_wire=bool(props['oneWire']),
                 network=network,
                 nodes=nodes
