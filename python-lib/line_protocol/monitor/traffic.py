@@ -51,7 +51,8 @@ class TrafficLogger(LineTrafficListener):
         self.traffic.logs.append(TrafficRecord(timestamp-self.traffic.start, request, size, data, checksum))
         self._changed = True
 
-    def on_error(self, timestamp, request: int, error_type):
+    def on_error(self, timestamp, request: int, error):
+        error_type = type(error).__name__
         self.traffic.logs.append(TrafficErrorRecord(timestamp-self.traffic.start, request, error_type))
         self._changed = True
 
