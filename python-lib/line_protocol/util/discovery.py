@@ -44,7 +44,7 @@ def network_discovery(master: LineMaster, start: int = 1, end: int = 14,
             key = address
 
         try:
-            node_status = NodeStatus(None, None, None, None)
+            node_status = NodeStatus(None, None, None, None, None)
             node_status.op_status = master.get_operation_status(address)
 
             # TODO: implement

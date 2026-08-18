@@ -147,26 +147,10 @@ class Request():
         self.id = id
         self.size = size
         self.signals = sorted(signals, key=lambda x: x.offset)
-        _packed = Request.packer(self.signals, self.size)
-
-        class RequestData(ctypes.LittleEndianStructure):
-            _pack_ = 1
-            _align_ = 1
-            _layout_ = 'ms'
-            nonlocal _packed
-            _fields_ = _packed
-
-            def __init__(self):
-                super().__init__()
-
-            def _to_dict(self):
-                return {field[0]: getattr(self, field[0]) for field in self._fields_}
-
-            @property
-            def fields(self):
-                return self._to_dict()
-
-        self.data_class = RequestData
+        for signal in self.signals:
+            if signal.offset < 0 or signal.width <= 0 or signal.offset + signal.width > size * 8:
+                raise ValueError(f'{signal.name} spans outside the frame!')
+        self.data_class = ctypes.c_uint8 * size
 
     def __len__(self):
         return self.size + 1 + 2 + 1 + 1 # sync, id, size, crc
@@ -204,7 +188,7 @@ class Request():
         raise NotImplementedError()
 
     def encode(self, signals: Dict[str, Union[str, int, float]]) -> List[int]:
-        data = self.data_class()
+        data = 0
         for signal in self.signals:
             if signal.name in signals:
                 if signal.encoder != None:
@@ -216,12 +200,18 @@ class Request():
                     value = signal.encoder.encode(signal.initial)
                 else:
                     value = signal.initial
-            setattr(data, signal.name, value)
-        return list(bytes(data))
+            data |= (value & ((1 << signal.width) - 1)) << signal.offset
+        return list(data.to_bytes(self.size, byteorder='little'))
 
     def decode_raw(self, data) -> Dict[str, int]:
-        decoded = self.data_class.from_buffer_copy(bytes(data))
-        return decoded.fields
+        payload = bytes(data)
+        if len(payload) != self.size:
+            raise ValueError(f'{self.name}: Expected {self.size} bytes, got {len(payload)}')
+        raw_data = int.from_bytes(payload, byteorder='little')
+        return {
+            signal.name: (raw_data >> signal.offset) & ((1 << signal.width) - 1)
+            for signal in self.signals
+        }
 
     def decode(self, data: Iterable[int]) -> SignalValueContainer:
         decoded = self.decode_raw(data)
